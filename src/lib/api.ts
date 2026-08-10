@@ -199,6 +199,7 @@ export const api = {
       .from('bookings')
       .insert({
         listing_id: input.listing_id,
+        client_id: input.client_id,
         guest_name: input.guest_name,
         check_in: input.check_in,
         check_out: input.check_out,
