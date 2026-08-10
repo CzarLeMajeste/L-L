@@ -1,4 +1,4 @@
-import { Home, Compass, CalendarCheck, Shield, KeyRound, LogOut, Plus, Building2, ChevronDown } from 'lucide-react'
+import { CalendarCheck, Shield, KeyRound, LogOut, Plus, Building2, ChevronDown, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import type { Route } from '../App'
 import type { Role } from './RoleSelect'
@@ -13,10 +13,9 @@ interface Props {
 
 export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props) {
   const [portalOpen, setPortalOpen] = useState(false)
-  const items: { key: string; label: string; icon: typeof Home; route: Route }[] = []
+  const items: { key: string; label: string; icon: typeof Sparkles; route: Route }[] = []
 
   if (role === 'client') {
-    items.push({ key: 'explore', label: 'Explore', icon: Compass, route: { name: 'explore' } })
   } else if (role === 'host') {
     items.push({ key: 'hostListings', label: 'My Listings', icon: Building2, route: { name: 'hostListings' } })
     items.push({ key: 'hostNew', label: 'Add Listing', icon: Plus, route: { name: 'hostNew' } })
@@ -32,8 +31,8 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <button onClick={() => onNavigate(items[0].route)} className="flex items-center gap-2.5 transition-transform hover:scale-[1.02]">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-soft">
-              <Home className="h-5 w-5" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 via-brand-600 to-accent-500 text-white shadow-soft">
+              <Sparkles className="h-5 w-5" />
             </span>
             <span className="font-display text-lg font-extrabold tracking-tight text-ink-900">
               Lodge<span className="text-brand-600">Link</span>

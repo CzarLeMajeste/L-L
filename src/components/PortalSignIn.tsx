@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, KeyRound, Shield, LogIn } from 'lucide-react'
+import { ArrowLeft, KeyRound, Shield, LogIn, UserPlus } from 'lucide-react'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import type { Role } from './RoleSelect'
 
@@ -14,12 +14,14 @@ export function PortalSignIn({ role, onSignedIn, onBack }: Props) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [signUpMode, setSignUpMode] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
   const isAdmin = role === 'admin'
   const Icon = isAdmin ? Shield : KeyRound
-  const title = isAdmin ? 'Admin sign in' : 'Host sign in'
+  const title = isAdmin ? 'Admin sign in' : signUpMode ? 'Create a host account' : 'Host sign in'
   const description = isAdmin
     ? 'Sign in with your approved administrator account to manage verification and audit records.'
-    : 'Sign in with your host account to manage listings and reservations.'
+    : signUpMode ? 'Create an account to publish lodging houses and private condos.' : 'Sign in with your host account to manage listings and reservations.'
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -29,6 +31,20 @@ export function PortalSignIn({ role, onSignedIn, onBack }: Props) {
     }
     setSubmitting(true)
     setError(null)
+    setMessage(null)
+
+    if (signUpMode && !isAdmin) {
+      const { error: signUpError } = await supabase.auth.signUp({ email, password, options: { data: { account_type: 'host' } } })
+      setSubmitting(false)
+      if (signUpError) {
+        setError(signUpError.message)
+        return
+      }
+      setMessage('Account created. An administrator must approve your host portal access before you sign in.')
+      setSignUpMode(false)
+      return
+    }
+
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
     setSubmitting(false)
 
@@ -72,10 +88,16 @@ export function PortalSignIn({ role, onSignedIn, onBack }: Props) {
                 <input className="input" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />
               </label>
               {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700">{error}</p>}
+              {message && <p className="rounded-xl bg-brand-50 px-3.5 py-2.5 text-sm text-brand-700">{message}</p>}
               <button className="btn-primary w-full" type="submit" disabled={submitting}>
-                <LogIn className="h-4 w-4" />
-                {submitting ? 'Signing in…' : `Sign in as ${isAdmin ? 'Admin' : 'Host'}`}
+                {signUpMode ? <UserPlus className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+                {submitting ? 'Working…' : signUpMode ? 'Create host account' : `Sign in as ${isAdmin ? 'Admin' : 'Host'}`}
               </button>
+              {!isAdmin && (
+                <button type="button" onClick={() => { setSignUpMode((mode) => !mode); setError(null); setMessage(null) }} className="btn-ghost w-full">
+                  {signUpMode ? 'Already have a host account? Sign in' : 'New host? Create an account'}
+                </button>
+              )}
             </form>
           </div>
         </div>
