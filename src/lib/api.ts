@@ -27,6 +27,7 @@ export const FILIPINO_ALTERNATIVES: FilipinoAlternative[] = [
 const TURNOVER_HOURS = 2
 export const TEST_CLIENT_ID = 'guest-001'
 const turnoverKey = (listingId: string) => `lodgelink-turnover-${listingId}`
+const localBookingKey = (bookingId: string) => `lodgelink-booking-${bookingId}`
 const isInTurnover = (listingId: string) => {
   const blockedUntil = Number(localStorage.getItem(turnoverKey(listingId)))
   return Number.isFinite(blockedUntil) && blockedUntil > Date.now()
@@ -225,6 +226,7 @@ export const api = {
       created_at: new Date().toISOString(),
     }
     this.markListingTurnover(input.listing_id, input.check_out)
+    if (import.meta.env.DEV && booking.id.startsWith('test-booking-')) localStorage.setItem(localBookingKey(booking.id), JSON.stringify(booking))
     await this.logAudit('guest', 'CLIENT', 'CREATE_BOOKING', String(booking.id), 'SUCCESS', 'Booking created')
     return booking
   },
@@ -314,6 +316,18 @@ export const api = {
     merchantName: string,
   ): Promise<{ payment: InstapayPayment; alternatives: FilipinoAlternative[] }> {
     await this.assertVerifiedClient(clientId)
+
+    if (import.meta.env.DEV && bookingId.startsWith('test-booking-')) {
+      const booking = JSON.parse(localStorage.getItem(localBookingKey(bookingId)) ?? 'null') as Booking | null
+      if (!booking) throw new ApiError(404, `Booking ${bookingId} was not found`)
+      const reference = `IP-${booking.id.slice(-8).toUpperCase()}`
+      const amount = Number(booking.total_price)
+      const qrPayload = `QRPH|INSTAPAY|REF:${reference}|MID:${merchantAccountId}|M:${merchantName}|AMT:${amount.toFixed(2)}|CCY:PHP`
+      return {
+        payment: { id: `test-payment-${Date.now()}`, booking_id: booking.id, payment_reference: reference, amount, currency: 'PHP', qr_payload: qrPayload, created_at: new Date().toISOString() },
+        alternatives: FILIPINO_ALTERNATIVES,
+      }
+    }
 
     const { data: booking, error: bErr } = await supabase
       .from('bookings')
