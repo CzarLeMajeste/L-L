@@ -1,4 +1,5 @@
-import { Home, Compass, CalendarCheck, Shield, KeyRound, LogOut, Plus, Building2 } from 'lucide-react'
+import { Home, Compass, CalendarCheck, Shield, KeyRound, LogOut, Plus, Building2, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
 import type { Route } from '../App'
 import type { Role } from './RoleSelect'
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props) {
+  const [portalOpen, setPortalOpen] = useState(false)
   const items: { key: string; label: string; icon: typeof Home; route: Route }[] = []
 
   if (role === 'client') {
@@ -62,14 +64,13 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
             )
           })}
           {role === 'client' ? (
-            <>
-              <button onClick={() => onOpenPortal('host')} className="ml-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-500 transition-all hover:bg-ink-100 hover:text-ink-800">
-                Host sign in
+            <div className="relative ml-2">
+              <button onClick={() => setPortalOpen((open) => !open)} className="flex items-center gap-2 rounded-xl bg-ink-900 px-3.5 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-800" aria-expanded={portalOpen}>
+                Partner portal
+                <ChevronDown className={`h-4 w-4 transition-transform ${portalOpen ? 'rotate-180' : ''}`} />
               </button>
-              <button onClick={() => onOpenPortal('admin')} className="rounded-xl bg-ink-900 px-3.5 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-800">
-                Admin sign in
-              </button>
-            </>
+              {portalOpen && <PortalMenu onOpenPortal={onOpenPortal} onClose={() => setPortalOpen(false)} />}
+            </div>
           ) : (
             <button onClick={onExit} className="ml-2 flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-400 transition-all hover:bg-red-50 hover:text-red-600">
               <LogOut className="h-4 w-4" />
@@ -95,9 +96,12 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
             )
           })}
           {role === 'client' ? (
-            <button onClick={() => onOpenPortal('host')} className="flex h-9 items-center justify-center rounded-xl px-2 text-xs font-semibold text-ink-600 hover:bg-ink-100" aria-label="Host sign in">
-              Host
-            </button>
+            <div className="relative">
+              <button onClick={() => setPortalOpen((open) => !open)} className="flex h-9 items-center justify-center rounded-xl px-2 text-xs font-semibold text-ink-600 hover:bg-ink-100" aria-label="Open partner portal" aria-expanded={portalOpen}>
+                Portal
+              </button>
+              {portalOpen && <PortalMenu onOpenPortal={onOpenPortal} onClose={() => setPortalOpen(false)} />}
+            </div>
           ) : (
             <button onClick={onExit} className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-400 hover:bg-red-50 hover:text-red-600" aria-label="Sign out">
               <LogOut className="h-4.5 w-4.5" />
@@ -106,5 +110,27 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
         </nav>
       </div>
     </header>
+  )
+}
+
+function PortalMenu({
+  onOpenPortal,
+  onClose,
+}: {
+  onOpenPortal: (role: Extract<Role, 'host' | 'admin'>) => void
+  onClose: () => void
+}) {
+  return (
+    <div className="absolute right-0 top-11 z-50 w-64 rounded-2xl bg-white p-2 shadow-lift ring-1 ring-ink-100">
+      <p className="px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-ink-400">Sign in to a portal</p>
+      <button onClick={() => { onClose(); onOpenPortal('host') }} className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-accent-50">
+        <span className="block text-sm font-semibold text-ink-800">Host portal</span>
+        <span className="mt-0.5 block text-xs text-ink-400">Manage listings and reservations</span>
+      </button>
+      <button onClick={() => { onClose(); onOpenPortal('admin') }} className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-ink-50">
+        <span className="block text-sm font-semibold text-ink-800">Admin portal</span>
+        <span className="mt-0.5 block text-xs text-ink-400">Verify clients and review audits</span>
+      </button>
+    </div>
   )
 }
