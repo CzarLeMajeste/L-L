@@ -60,6 +60,17 @@ export const api = {
     return data as Listing
   },
 
+  async deleteListing(id: string): Promise<void> {
+    const { error } = await supabase.from('listings').delete().eq('id', id)
+    if (error) throw new ApiError(500, error.message)
+    await this.logAudit('host', 'CLIENT', 'DELETE_LISTING', id, 'SUCCESS', 'Listing deleted')
+  },
+
+  async updateListingAvailability(id: string, available: boolean): Promise<void> {
+    const { error } = await supabase.from('listings').update({ available }).eq('id', id)
+    if (error) throw new ApiError(500, error.message)
+  },
+
   async getBookings(): Promise<Booking[]> {
     const { data, error } = await supabase
       .from('bookings')
