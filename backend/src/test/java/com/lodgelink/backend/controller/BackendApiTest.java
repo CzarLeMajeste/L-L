@@ -145,6 +145,62 @@ class BackendApiTest {
     }
 
     @Test
+    void generatesInstaPayQrWithFilipinoAlternatives() throws Exception {
+        verifyClient(CLIENT_ID);
+
+        Map<String, Object> listing = new HashMap<>();
+        listing.put("title", "Pasay Stay");
+        listing.put("propertyType", "PRIVATE_CONDO");
+        listing.put("location", "Pasay");
+        listing.put("nightlyRate", 110);
+        listing.put("maxGuests", 2);
+        listing.put("available", true);
+
+        String listingResponse = mockMvc.perform(post("/api/listings")
+                .header("X-Client-Id", CLIENT_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(listing)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        long listingId = objectMapper.readTree(listingResponse).get("id").asLong();
+
+        Map<String, Object> booking = new HashMap<>();
+        booking.put("listingId", listingId);
+        booking.put("guestName", "Jules Santos");
+        booking.put("checkIn", LocalDate.now().plusDays(3));
+        booking.put("checkOut", LocalDate.now().plusDays(5));
+        booking.put("guests", 2);
+
+        String bookingResponse = mockMvc.perform(post("/api/bookings")
+                .header("X-Client-Id", CLIENT_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(booking)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        long bookingId = objectMapper.readTree(bookingResponse).get("id").asLong();
+
+        Map<String, Object> paymentRequest = new HashMap<>();
+        paymentRequest.put("bookingId", bookingId);
+        paymentRequest.put("merchantAccountId", "0011223344");
+        paymentRequest.put("merchantName", "LodgeLink PH");
+
+        mockMvc.perform(post("/api/payments/instapay/qr")
+                .header("X-Client-Id", CLIENT_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(paymentRequest)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.bookingId").value(bookingId))
+            .andExpect(jsonPath("$.amount").value(220))
+            .andExpect(jsonPath("$.currency").value("PHP"))
+            .andExpect(jsonPath("$.qrPayload").value(org.hamcrest.Matchers.containsString("INSTAPAY")))
+            .andExpect(jsonPath("$.filipinoAlternatives[0].code").value("GCASH"))
+            .andExpect(jsonPath("$.filipinoAlternatives[1].code").value("MAYA"))
+            .andExpect(jsonPath("$.filipinoAlternatives[2].code").value("PESONET"));
+    }
+
+    @Test
     void exposesAuditLogsToAdmin() throws Exception {
         verifyClient(CLIENT_ID);
 
