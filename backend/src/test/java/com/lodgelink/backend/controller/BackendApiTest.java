@@ -20,6 +20,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class BackendApiTest {
+    private static final String ADMIN_ID = "admin-ops";
+    private static final String CLIENT_ID = "client-001";
 
     @Autowired
     private MockMvc mockMvc;
@@ -29,6 +31,8 @@ class BackendApiTest {
 
     @Test
     void createsAndFiltersLodgingAndCondoListings() throws Exception {
+        verifyClient(CLIENT_ID);
+
         Map<String, Object> lodgingListing = new HashMap<>();
         lodgingListing.put("title", "Hillside Lodge");
         lodgingListing.put("propertyType", "LODGING_HOUSE");
@@ -46,12 +50,14 @@ class BackendApiTest {
         condoListing.put("available", true);
 
         mockMvc.perform(post("/api/listings")
+                .header("X-Client-Id", CLIENT_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(lodgingListing)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.propertyType").value("LODGING_HOUSE"));
 
         mockMvc.perform(post("/api/listings")
+                .header("X-Client-Id", CLIENT_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(condoListing)))
             .andExpect(status().isCreated())
@@ -65,6 +71,8 @@ class BackendApiTest {
 
     @Test
     void createsBookingForAvailableListingWithCalculatedTotal() throws Exception {
+        verifyClient(CLIENT_ID);
+
         Map<String, Object> listing = new HashMap<>();
         listing.put("title", "Sunset Condo");
         listing.put("propertyType", "PRIVATE_CONDO");
@@ -74,6 +82,7 @@ class BackendApiTest {
         listing.put("available", true);
 
         String listingResponse = mockMvc.perform(post("/api/listings")
+                .header("X-Client-Id", CLIENT_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(listing)))
             .andExpect(status().isCreated())
@@ -89,6 +98,7 @@ class BackendApiTest {
         booking.put("guests", 2);
 
         mockMvc.perform(post("/api/bookings")
+                .header("X-Client-Id", CLIENT_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(booking)))
             .andExpect(status().isCreated())
@@ -98,6 +108,8 @@ class BackendApiTest {
 
     @Test
     void rejectsBookingWhenListingDoesNotExist() throws Exception {
+        verifyClient(CLIENT_ID);
+
         Map<String, Object> booking = new HashMap<>();
         booking.put("listingId", 999);
         booking.put("guestName", "Alex Cruz");
@@ -106,9 +118,54 @@ class BackendApiTest {
         booking.put("guests", 1);
 
         mockMvc.perform(post("/api/bookings")
+                .header("X-Client-Id", CLIENT_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(booking)))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.detail").value("Listing 999 was not found"));
+    }
+
+    @Test
+    void rejectsListingCreationForUnverifiedClient() throws Exception {
+        Map<String, Object> listing = new HashMap<>();
+        listing.put("title", "Unverified Listing");
+        listing.put("propertyType", "LODGING_HOUSE");
+        listing.put("location", "Tagaytay");
+        listing.put("nightlyRate", 95.00);
+        listing.put("maxGuests", 2);
+        listing.put("available", true);
+
+        mockMvc.perform(post("/api/listings")
+                .header("X-Client-Id", "client-unverified")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(listing)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.detail")
+                .value("Client identity verification and compliance acceptance are required"));
+    }
+
+    @Test
+    void exposesAuditLogsToAdmin() throws Exception {
+        verifyClient(CLIENT_ID);
+
+        mockMvc.perform(get("/api/admin/audit-logs")
+                .header("X-Admin-Id", ADMIN_ID))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].action").value("VERIFY_CLIENT"));
+    }
+
+    private void verifyClient(String clientId) throws Exception {
+        Map<String, Object> verificationRequest = new HashMap<>();
+        verificationRequest.put("documentType", "PASSPORT");
+        verificationRequest.put("documentId", "A1234567");
+        verificationRequest.put("complianceAccepted", true);
+
+        mockMvc.perform(post("/api/admin/clients/{clientId}/verify", clientId)
+                .header("X-Admin-Id", ADMIN_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(verificationRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.identityVerified").value(true))
+            .andExpect(jsonPath("$.complianceAccepted").value(true));
     }
 }

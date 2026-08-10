@@ -19,12 +19,22 @@ public class BookingService {
     private final Map<Long, Booking> bookings = new ConcurrentHashMap<>();
     private final AtomicLong bookingIdSequence = new AtomicLong(1);
     private final ListingService listingService;
+    private final IdentityVerificationService identityVerificationService;
+    private final AuditLogService auditLogService;
 
-    public BookingService(ListingService listingService) {
+    public BookingService(
+        ListingService listingService,
+        IdentityVerificationService identityVerificationService,
+        AuditLogService auditLogService
+    ) {
         this.listingService = listingService;
+        this.identityVerificationService = identityVerificationService;
+        this.auditLogService = auditLogService;
     }
 
-    public Booking createBooking(CreateBookingRequest request) {
+    public Booking createBooking(String clientId, CreateBookingRequest request) {
+        identityVerificationService.assertVerifiedClient(clientId);
+
         if (!request.checkOut().isAfter(request.checkIn())) {
             throw new InvalidRequestException("checkOut must be after checkIn");
         }
@@ -52,6 +62,7 @@ public class BookingService {
             BookingStatus.CONFIRMED
         );
         bookings.put(id, booking);
+        auditLogService.log(clientId, "CLIENT", "CREATE_BOOKING", String.valueOf(id), "SUCCESS", "Booking created");
         return booking;
     }
 
