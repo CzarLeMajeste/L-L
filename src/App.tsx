@@ -8,6 +8,7 @@ import { BookingsView } from './views/BookingsView'
 import { HostView } from './views/HostView'
 import { HostListingsView } from './views/HostListingsView'
 import { HostBookingsView } from './views/HostBookingsView'
+import { HostAdminView } from './views/HostAdminView'
 import { AdminVerifyView } from './views/AdminVerifyView'
 import { AdminAuditView } from './views/AdminAuditView'
 import { supabase } from './lib/supabase'
@@ -20,6 +21,7 @@ export type Route =
   | { name: 'hostListings' }
   | { name: 'hostNew' }
   | { name: 'hostBookings' }
+  | { name: 'hostAdmin' }
   | { name: 'adminVerify' }
   | { name: 'adminAudit' }
 
@@ -27,7 +29,7 @@ type Portal = Extract<Role, 'host' | 'admin'>
 
 export default function App() {
   const [role, setRole] = useState<Role>('client')
-  const [portal, setPortal] = useState<Portal | null>(null)
+  const [portal, setPortal] = useState<Portal | null>(() => (window.location.pathname === '/admin' ? 'host' : null))
   const [route, setRoute] = useState<Route>({ name: 'explore' })
   const [filter, setFilter] = useState<PropertyType | undefined>(undefined)
 
@@ -42,7 +44,7 @@ export default function App() {
   const enterPortal = () => {
     if (!portal) return
     setRole(portal)
-    setRoute(portal === 'host' ? { name: 'hostListings' } : { name: 'adminVerify' })
+    setRoute(portal === 'host' ? (window.location.pathname === '/admin' ? { name: 'hostAdmin' } : { name: 'hostListings' }) : { name: 'adminVerify' })
     setPortal(null)
   }
 
@@ -72,6 +74,7 @@ export default function App() {
             {route.name === 'hostListings' && <HostListingsView />}
             {route.name === 'hostNew' && <HostView onDone={() => setRoute({ name: 'hostListings' })} />}
             {route.name === 'hostBookings' && <HostBookingsView />}
+            {route.name === 'hostAdmin' && <HostAdminView />}
           </>
         )}
         {role === 'admin' && (

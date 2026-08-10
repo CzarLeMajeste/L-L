@@ -22,6 +22,7 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
     items.push({ key: 'hostListings', label: 'My Listings', icon: Building2, route: { name: 'hostListings' } })
     items.push({ key: 'hostNew', label: 'Add Listing', icon: Plus, route: { name: 'hostNew' } })
     items.push({ key: 'hostBookings', label: 'Reservations', icon: CalendarCheck, route: { name: 'hostBookings' } })
+    items.push({ key: 'hostAdmin', label: 'Admin panel', icon: Shield, route: { name: 'hostAdmin' } })
   } else if (role === 'admin') {
     items.push({ key: 'adminVerify', label: 'Verification', icon: Shield, route: { name: 'adminVerify' } })
     items.push({ key: 'adminAudit', label: 'Audit Logs', icon: KeyRound, route: { name: 'adminAudit' } })
