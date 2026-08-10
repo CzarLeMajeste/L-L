@@ -14,7 +14,7 @@ export function ListingDetailView({ id, onBack }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   const [clientId, setClientId] = useState('guest-001')
-  const [guestName, setGuestName] = useState('')
+  const [guestName, setGuestName] = useState('Test Guest 001')
   const [identityVerified, setIdentityVerified] = useState(false)
   const [verifyingIdentity, setVerifyingIdentity] = useState(false)
   const [checkIn, setCheckIn] = useState('')
@@ -176,7 +176,7 @@ export function ListingDetailView({ id, onBack }: Props) {
                   </div>
                   <div>
                     <label className="label">Guest name</label>
-                    <input className="input" value={guestName} onChange={(e) => { setGuestName(e.target.value); setIdentityVerified(false) }} placeholder="Juan Dela Cruz" disabled={identityVerified} />
+                    <input className="input" value={guestName} onChange={(e) => { setGuestName(e.target.value); setIdentityVerified(false) }} placeholder="Test Guest 001" disabled={identityVerified} />
                   </div>
                   {!identityVerified && (
                     <button onClick={verifyIdentity} disabled={verifyingIdentity} className="btn-secondary w-full">
