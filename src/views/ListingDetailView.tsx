@@ -154,7 +154,7 @@ export function ListingDetailView({ id, onBack }: Props) {
                   <div>
                     <label className="label">Verified client ID</label>
                     <input className="input" value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="guest-001" />
-                    <p className="mt-1 text-[11px] text-ink-400">No account needed. Use the ID approved by LodgeLink verification.</p>
+                    <p className="mt-1 text-[11px] text-ink-400">No account needed. Use the ID approved by LodgeLink verification. Preview test ID: guest-001.</p>
                   </div>
                   <div>
                     <label className="label">Guest name</label>

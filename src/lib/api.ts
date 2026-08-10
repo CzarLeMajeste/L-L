@@ -25,6 +25,7 @@ export const FILIPINO_ALTERNATIVES: FilipinoAlternative[] = [
 ]
 
 const TURNOVER_HOURS = 2
+export const TEST_CLIENT_ID = 'guest-001'
 const turnoverKey = (listingId: string) => `lodgelink-turnover-${listingId}`
 const isInTurnover = (listingId: string) => {
   const blockedUntil = Number(localStorage.getItem(turnoverKey(listingId)))
@@ -262,6 +263,18 @@ export const api = {
   },
 
   async assertVerifiedClient(clientId: string): Promise<ClientVerification> {
+    if (import.meta.env.DEV && clientId === TEST_CLIENT_ID) {
+      return {
+        id: 'test-verification-001',
+        client_id: TEST_CLIENT_ID,
+        document_type: 'TEST_ID',
+        document_id: TEST_CLIENT_ID,
+        identity_verified: true,
+        compliance_accepted: true,
+        verified_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      }
+    }
     if (!isSupabaseConfigured) throw new ApiError(503, 'Identity verification is unavailable until the Supabase connection is configured.')
     const v = await this.getVerification(clientId)
     if (!v || !v.identity_verified || !v.compliance_accepted) {
