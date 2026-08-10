@@ -83,6 +83,7 @@ export const api = {
   },
 
   async createBooking(input: NewBookingInput): Promise<Booking> {
+    await this.assertVerifiedClient(input.client_id)
     const { data: listing, error: lErr } = await supabase
       .from('listings')
       .select('*')
@@ -121,6 +122,7 @@ export const api = {
   },
 
   async getVerification(clientId: string): Promise<ClientVerification | null> {
+    if (!isSupabaseConfigured) return null
     const { data, error } = await supabase
       .from('client_verifications')
       .select('*')
@@ -164,6 +166,7 @@ export const api = {
   },
 
   async assertVerifiedClient(clientId: string): Promise<ClientVerification> {
+    if (!isSupabaseConfigured) throw new ApiError(503, 'Identity verification is unavailable until the Supabase connection is configured.')
     const v = await this.getVerification(clientId)
     if (!v || !v.identity_verified || !v.compliance_accepted) {
       await this.logAudit(clientId, 'CLIENT', 'IDENTITY_CHECK', clientId, 'REJECTED', 'Identity verification and compliance acceptance are required')

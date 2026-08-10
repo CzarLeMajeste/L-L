@@ -53,9 +53,11 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
     if (!checkIn || !checkOut) return setFormError('Please choose check-in and check-out dates.')
     if (nights < 1) return setFormError('Check-out must be after check-in.')
     if (listing && guests > listing.max_guests) return setFormError(`This stay allows up to ${listing.max_guests} guests.`)
+    if (!clientId.trim()) return setFormError('Please enter your client ID.')
     setSubmitting(true)
     try {
-      const b = await api.createBooking({ listing_id: id, guest_name: guestName, check_in: checkIn, check_out: checkOut, guests })
+      await api.assertVerifiedClient(clientId.trim())
+      const b = await api.createBooking({ client_id: clientId.trim(), listing_id: id, guest_name: guestName, check_in: checkIn, check_out: checkOut, guests })
       setBooking(b)
     } catch (e: any) {
       setFormError(e.message)
@@ -151,6 +153,11 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
               {!booking ? (
                 <div className="mt-4 space-y-3">
                   <div>
+                    <label className="label">Verified client ID</label>
+                    <input className="input" value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="guest-001" />
+                    <p className="mt-1 text-[11px] text-ink-400">No account needed. Use the ID approved by LodgeLink verification.</p>
+                  </div>
+                  <div>
                     <label className="label">Guest name</label>
                     <input className="input" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Juan Dela Cruz" />
                   </div>
@@ -193,8 +200,6 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
               ) : (
                 <BookingConfirmation
                   booking={booking}
-                  clientId={clientId}
-                  setClientId={setClientId}
                   payment={payment}
                   paying={paying}
                   payError={payError}
@@ -212,8 +217,6 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
 
 function BookingConfirmation({
   booking,
-  clientId,
-  setClientId,
   payment,
   paying,
   payError,
@@ -221,8 +224,6 @@ function BookingConfirmation({
   onBooked,
 }: {
   booking: Booking
-  clientId: string
-  setClientId: (s: string) => void
   payment: InstapayPayment | null
   paying: boolean
   payError: string | null
@@ -237,12 +238,8 @@ function BookingConfirmation({
 
       {!payment ? (
         <>
-          <div>
-            <label className="label">Client ID (for verification)</label>
-            <input className="input" value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="guest-001" />
-          </div>
           <p className="text-xs text-ink-500">
-            To generate an InstaPay QR, your client ID must be verified by an admin first. Visit the Admin tab to verify a client.
+            Your verified client ID was checked before this booking was created. Use the same ID to generate your InstaPay QR.
           </p>
           {payError && <p className="text-xs font-medium text-red-600">{payError}</p>}
           <button onClick={onPay} disabled={paying} className="btn-primary w-full">

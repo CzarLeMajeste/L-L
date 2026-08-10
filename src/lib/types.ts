@@ -38,6 +38,7 @@ export interface Booking {
 
 export interface NewBookingInput {
   listing_id: string
+  client_id: string
   guest_name: string
   check_in: string
   check_out: string
