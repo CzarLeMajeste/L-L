@@ -23,8 +23,10 @@ mvn test
 
 ### API overview
 
-- `POST /api/listings` create a listing
+- `POST /api/admin/clients/{clientId}/verify` verify client identity and mark compliance accepted (`X-Admin-Id` header required)
+- `GET /api/admin/audit-logs` retrieve audit log entries (`X-Admin-Id` header required)
+- `POST /api/listings` create a listing (`X-Client-Id` header required and client must be verified/compliant)
 - `GET /api/listings` list listings (optional query param: `propertyType`)
 - `GET /api/listings/{id}` get listing details
-- `POST /api/bookings` create a booking
+- `POST /api/bookings` create a booking (`X-Client-Id` header required and client must be verified/compliant)
 - `GET /api/bookings` list bookings

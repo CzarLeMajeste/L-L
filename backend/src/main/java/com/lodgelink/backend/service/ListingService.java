@@ -16,8 +16,20 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ListingService {
     private final Map<Long, Listing> listings = new ConcurrentHashMap<>();
     private final AtomicLong listingIdSequence = new AtomicLong(1);
+    private final IdentityVerificationService identityVerificationService;
+    private final AuditLogService auditLogService;
 
-    public Listing createListing(CreateListingRequest request) {
+    public ListingService(
+        IdentityVerificationService identityVerificationService,
+        AuditLogService auditLogService
+    ) {
+        this.identityVerificationService = identityVerificationService;
+        this.auditLogService = auditLogService;
+    }
+
+    public Listing createListing(String clientId, CreateListingRequest request) {
+        identityVerificationService.assertVerifiedClient(clientId);
+
         long id = listingIdSequence.getAndIncrement();
         Listing listing = new Listing(
             id,
@@ -29,6 +41,7 @@ public class ListingService {
             request.available()
         );
         listings.put(id, listing);
+        auditLogService.log(clientId, "CLIENT", "CREATE_LISTING", String.valueOf(id), "SUCCESS", "Listing created");
         return listing;
     }
 
