@@ -7,9 +7,10 @@ interface Props {
   role: Role
   onNavigate: (r: Route) => void
   onExit: () => void
+  onOpenPortal: (role: Extract<Role, 'host' | 'admin'>) => void
 }
 
-export function Navbar({ route, role, onNavigate, onExit }: Props) {
+export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props) {
   const items: { key: string; label: string; icon: typeof Home; route: Route }[] = []
 
   if (role === 'client') {
@@ -60,10 +61,21 @@ export function Navbar({ route, role, onNavigate, onExit }: Props) {
               </button>
             )
           })}
-          <button onClick={onExit} className="ml-2 flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-400 transition-all hover:bg-red-50 hover:text-red-600">
-            <LogOut className="h-4 w-4" />
-            Exit
-          </button>
+          {role === 'client' ? (
+            <>
+              <button onClick={() => onOpenPortal('host')} className="ml-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-500 transition-all hover:bg-ink-100 hover:text-ink-800">
+                Host sign in
+              </button>
+              <button onClick={() => onOpenPortal('admin')} className="rounded-xl bg-ink-900 px-3.5 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-800">
+                Admin sign in
+              </button>
+            </>
+          ) : (
+            <button onClick={onExit} className="ml-2 flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-400 transition-all hover:bg-red-50 hover:text-red-600">
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
+          )}
         </nav>
 
         <nav className="flex items-center gap-1 sm:hidden">
@@ -82,9 +94,15 @@ export function Navbar({ route, role, onNavigate, onExit }: Props) {
               </button>
             )
           })}
-          <button onClick={onExit} className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-400 hover:bg-red-50 hover:text-red-600" aria-label="Exit">
-            <LogOut className="h-4.5 w-4.5" />
-          </button>
+          {role === 'client' ? (
+            <button onClick={() => onOpenPortal('host')} className="flex h-9 items-center justify-center rounded-xl px-2 text-xs font-semibold text-ink-600 hover:bg-ink-100" aria-label="Host sign in">
+              Host
+            </button>
+          ) : (
+            <button onClick={onExit} className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-400 hover:bg-red-50 hover:text-red-600" aria-label="Sign out">
+              <LogOut className="h-4.5 w-4.5" />
+            </button>
+          )}
         </nav>
       </div>
     </header>

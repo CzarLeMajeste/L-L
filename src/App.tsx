@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { RoleSelect } from './components/RoleSelect'
 import type { Role } from './components/RoleSelect'
 import { Navbar } from './components/Navbar'
+import { PortalSignIn } from './components/PortalSignIn'
 import { ExploreView } from './views/ExploreView'
 import { ListingDetailView } from './views/ListingDetailView'
 import { BookingsView } from './views/BookingsView'
@@ -10,6 +10,7 @@ import { HostListingsView } from './views/HostListingsView'
 import { HostBookingsView } from './views/HostBookingsView'
 import { AdminVerifyView } from './views/AdminVerifyView'
 import { AdminAuditView } from './views/AdminAuditView'
+import { supabase } from './lib/supabase'
 import type { PropertyType } from './lib/types'
 
 export type Route =
@@ -22,47 +23,50 @@ export type Route =
   | { name: 'adminVerify' }
   | { name: 'adminAudit' }
 
+type Portal = Extract<Role, 'host' | 'admin'>
+
 export default function App() {
-  const [role, setRole] = useState<Role | null>(null)
+  const [role, setRole] = useState<Role>('client')
+  const [portal, setPortal] = useState<Portal | null>(null)
   const [route, setRoute] = useState<Route>({ name: 'explore' })
   const [filter, setFilter] = useState<PropertyType | undefined>(undefined)
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [route])
+  }, [route, portal])
 
-  const selectRole = (r: Role) => {
-    setRole(r)
-    if (r === 'client') setRoute({ name: 'explore' })
-    else if (r === 'host') setRoute({ name: 'hostListings' })
-    else setRoute({ name: 'adminVerify' })
+  const openPortal = (nextPortal: Portal) => {
+    setPortal(nextPortal)
   }
 
-  const exit = () => {
-    setRole(null)
+  const enterPortal = () => {
+    if (!portal) return
+    setRole(portal)
+    setRoute(portal === 'host' ? { name: 'hostListings' } : { name: 'adminVerify' })
+    setPortal(null)
+  }
+
+  const exitPortal = async () => {
+    await supabase.auth.signOut()
+    setRole('client')
     setRoute({ name: 'explore' })
   }
 
-  if (!role) {
-    return <RoleSelect onSelect={selectRole} />
+  if (portal) {
+    return <PortalSignIn role={portal} onSignedIn={enterPortal} onBack={() => setPortal(null)} />
   }
 
   return (
     <div className="min-h-full">
-      <Navbar route={route} role={role} onNavigate={setRoute} onExit={exit} />
+      <Navbar route={route} role={role} onNavigate={setRoute} onExit={exitPortal} onOpenPortal={openPortal} />
       <main className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
         {role === 'client' && (
           <>
-            {route.name === 'explore' && (
-              <ExploreView filter={filter} onFilter={setFilter} onOpenListing={(id) => setRoute({ name: 'listing', id })} />
-            )}
-            {route.name === 'listing' && (
-              <ListingDetailView id={route.id} onBack={() => setRoute({ name: 'explore' })} onBooked={() => setRoute({ name: 'bookings' })} />
-            )}
+            {route.name === 'explore' && <ExploreView filter={filter} onFilter={setFilter} onOpenListing={(id) => setRoute({ name: 'listing', id })} />}
+            {route.name === 'listing' && <ListingDetailView id={route.id} onBack={() => setRoute({ name: 'explore' })} onBooked={() => setRoute({ name: 'bookings' })} />}
             {route.name === 'bookings' && <BookingsView onExplore={() => setRoute({ name: 'explore' })} />}
           </>
         )}
-
         {role === 'host' && (
           <>
             {route.name === 'hostListings' && <HostListingsView />}
@@ -70,7 +74,6 @@ export default function App() {
             {route.name === 'hostBookings' && <HostBookingsView />}
           </>
         )}
-
         {role === 'admin' && (
           <>
             {route.name === 'adminVerify' && <AdminVerifyView />}
