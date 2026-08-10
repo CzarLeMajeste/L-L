@@ -71,4 +71,12 @@ public class BookingService {
             .sorted(Comparator.comparing(Booking::id))
             .toList();
     }
+
+    public Booking getBooking(Long bookingId) {
+        Booking booking = bookings.get(bookingId);
+        if (booking == null) {
+            throw new ResourceNotFoundException("Booking " + bookingId + " was not found");
+        }
+        return booking;
+    }
 }

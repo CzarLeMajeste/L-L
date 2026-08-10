@@ -30,3 +30,4 @@ mvn test
 - `GET /api/listings/{id}` get listing details
 - `POST /api/bookings` create a booking (`X-Client-Id` header required and client must be verified/compliant)
 - `GET /api/bookings` list bookings
+- `POST /api/payments/instapay/qr` generate InstaPay QR payload for a booking with Filipino alternatives (`X-Client-Id` header required and client must be verified/compliant)
