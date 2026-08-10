@@ -127,10 +127,6 @@ function PortalMenu({
         <span className="block text-sm font-semibold text-ink-800">Host portal</span>
         <span className="mt-0.5 block text-xs text-ink-400">Manage listings and reservations</span>
       </button>
-      <button onClick={() => { onClose(); onOpenPortal('admin') }} className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-ink-50">
-        <span className="block text-sm font-semibold text-ink-800">Admin portal</span>
-        <span className="mt-0.5 block text-xs text-ink-400">Verify clients and review audits</span>
-      </button>
     </div>
   )
 }
