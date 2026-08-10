@@ -24,6 +24,13 @@ export const FILIPINO_ALTERNATIVES: FilipinoAlternative[] = [
   { code: 'OTC_BAYAD_CENTER', displayName: 'Bayad Center', description: 'Over-the-counter cash payment option' },
 ]
 
+const TURNOVER_HOURS = 2
+const turnoverKey = (listingId: string) => `lodgelink-turnover-${listingId}`
+const isInTurnover = (listingId: string) => {
+  const blockedUntil = Number(localStorage.getItem(turnoverKey(listingId)))
+  return Number.isFinite(blockedUntil) && blockedUntil > Date.now()
+}
+
 const EXAMPLE_LISTINGS: Listing[] = [
   {
     id: 'demo-baguio-lodge',
@@ -77,19 +84,22 @@ const EXAMPLE_LISTINGS: Listing[] = [
 
 export const api = {
   async getListings(propertyType?: PropertyType): Promise<Listing[]> {
-    if (!isSupabaseConfigured) return propertyType ? EXAMPLE_LISTINGS.filter((listing) => listing.property_type === propertyType) : EXAMPLE_LISTINGS
+    if (!isSupabaseConfigured) {
+      const availableExamples = EXAMPLE_LISTINGS.filter((listing) => !isInTurnover(listing.id))
+      return propertyType ? availableExamples.filter((listing) => listing.property_type === propertyType) : availableExamples
+    }
     let query = supabase.from('listings').select('*').order('created_at', { ascending: true })
     if (propertyType) query = query.eq('property_type', propertyType)
     const { data, error } = await query
     if (error) throw new ApiError(500, error.message)
-    return data as Listing[]
+    return (data as Listing[]).map((listing) => isInTurnover(listing.id) ? { ...listing, available: false } : listing)
   },
 
   async getListing(id: string): Promise<Listing> {
     if (!isSupabaseConfigured) {
       const listing = EXAMPLE_LISTINGS.find((item) => item.id === id)
       if (!listing) throw new ApiError(404, `Listing ${id} was not found`)
-      return listing
+      return isInTurnover(id) ? { ...listing, available: false } : listing
     }
     const { data, error } = await supabase.from('listings').select('*').eq('id', id).maybeSingle()
     if (error) throw new ApiError(500, error.message)
@@ -126,6 +136,11 @@ export const api = {
   async updateListingAvailability(id: string, available: boolean): Promise<void> {
     const { error } = await supabase.from('listings').update({ available }).eq('id', id)
     if (error) throw new ApiError(500, error.message)
+  },
+
+  markListingTurnover(listingId: string, checkOut: string): void {
+    const blockedUntil = new Date(new Date(checkOut).getTime() + TURNOVER_HOURS * 3_600_000).getTime()
+    localStorage.setItem(turnoverKey(listingId), String(blockedUntil))
   },
 
   async getBookings(): Promise<Booking[]> {
@@ -173,6 +188,7 @@ export const api = {
       .single()
     if (error) throw new ApiError(500, error.message)
     const booking = data as Booking
+    this.markListingTurnover(input.listing_id, input.check_out)
     await this.logAudit('guest', 'CLIENT', 'CREATE_BOOKING', String(booking.id), 'SUCCESS', 'Booking created')
     return booking
   },

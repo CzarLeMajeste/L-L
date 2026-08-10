@@ -7,10 +7,9 @@ import { QRCode } from '../components/QRCode'
 interface Props {
   id: string
   onBack: () => void
-  onBooked: () => void
 }
 
-export function ListingDetailView({ id, onBack, onBooked }: Props) {
+export function ListingDetailView({ id, onBack }: Props) {
   const [listing, setListing] = useState<Listing | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -204,7 +203,7 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
                   paying={paying}
                   payError={payError}
                   onPay={pay}
-                  onBooked={onBooked}
+                  onBack={onBack}
                 />
               )}
             </div>
@@ -221,14 +220,14 @@ function BookingConfirmation({
   paying,
   payError,
   onPay,
-  onBooked,
+  onBack,
 }: {
   booking: Booking
   payment: InstapayPayment | null
   paying: boolean
   payError: string | null
   onPay: () => void
-  onBooked: () => void
+  onBack: () => void
 }) {
   return (
     <div className="mt-4 space-y-4">
@@ -245,7 +244,7 @@ function BookingConfirmation({
           <button onClick={onPay} disabled={paying} className="btn-primary w-full">
             <QrCode className="h-4 w-4" /> {paying ? 'Generating…' : 'Generate InstaPay QR'}
           </button>
-          <button onClick={onBooked} className="btn-secondary w-full">View my bookings</button>
+          <p className="rounded-xl bg-accent-50 px-3 py-2.5 text-xs leading-relaxed text-accent-700">Your host will send check-in instructions and arrival details using the contact information provided during verification.</p>
         </>
       ) : (
         <div className="animate-scale-in space-y-4">
@@ -270,7 +269,8 @@ function BookingConfirmation({
               ))}
             </div>
           </div>
-          <button onClick={onBooked} className="btn-primary w-full">Done — view bookings</button>
+          <p className="rounded-xl bg-brand-50 px-3 py-2.5 text-xs leading-relaxed text-brand-700">Receipt saved. Your stay is blocked through checkout plus a two-hour cleaning window so the host can prepare the room for the next guest.</p>
+          <button onClick={onBack} className="btn-primary w-full">Return to stays</button>
         </div>
       )}
     </div>

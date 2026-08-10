@@ -50,15 +50,6 @@ export function BookingsView({ onExplore }: Props) {
         </div>
       )}
 
-      {rows && rows.length === 0 && !error && (
-        <div className="card p-10 text-center">
-          <CalendarCheck className="mx-auto h-8 w-8 text-ink-300" />
-          <p className="mt-3 text-sm font-semibold text-ink-600">No bookings yet.</p>
-          <p className="mt-1 text-xs text-ink-400">Reserve a stay to see it here.</p>
-          <button onClick={onExplore} className="btn-primary mt-4">Browse stays</button>
-        </div>
-      )}
-
       {rows && rows.length > 0 && (
         <div className="space-y-4">
           {rows.map((b, i) => (

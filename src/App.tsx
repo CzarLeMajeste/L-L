@@ -4,7 +4,6 @@ import { Navbar } from './components/Navbar'
 import { PortalSignIn } from './components/PortalSignIn'
 import { ExploreView } from './views/ExploreView'
 import { ListingDetailView } from './views/ListingDetailView'
-import { BookingsView } from './views/BookingsView'
 import { HostView } from './views/HostView'
 import { HostListingsView } from './views/HostListingsView'
 import { HostBookingsView } from './views/HostBookingsView'
@@ -17,7 +16,6 @@ import type { PropertyType } from './lib/types'
 export type Route =
   | { name: 'explore' }
   | { name: 'listing'; id: string }
-  | { name: 'bookings' }
   | { name: 'hostListings' }
   | { name: 'hostNew' }
   | { name: 'hostBookings' }
@@ -65,8 +63,7 @@ export default function App() {
         {role === 'client' && (
           <>
             {route.name === 'explore' && <ExploreView filter={filter} onFilter={setFilter} onOpenListing={(id) => setRoute({ name: 'listing', id })} />}
-            {route.name === 'listing' && <ListingDetailView id={route.id} onBack={() => setRoute({ name: 'explore' })} onBooked={() => setRoute({ name: 'bookings' })} />}
-            {route.name === 'bookings' && <BookingsView onExplore={() => setRoute({ name: 'explore' })} />}
+            {route.name === 'listing' && <ListingDetailView id={route.id} onBack={() => setRoute({ name: 'explore' })} />}
           </>
         )}
         {role === 'host' && (
@@ -84,11 +81,6 @@ export default function App() {
           </>
         )}
       </main>
-      <footer className="border-t border-ink-100 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-8 text-center text-xs text-ink-400 sm:px-6 lg:px-8">
-          LodgeLink — Love at the Lodge · Lodging houses & private condos across the Philippines
-        </div>
-      </footer>
     </div>
   )
 }

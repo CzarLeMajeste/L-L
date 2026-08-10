@@ -17,7 +17,6 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
 
   if (role === 'client') {
     items.push({ key: 'explore', label: 'Explore', icon: Compass, route: { name: 'explore' } })
-    items.push({ key: 'bookings', label: 'My Bookings', icon: CalendarCheck, route: { name: 'bookings' } })
   } else if (role === 'host') {
     items.push({ key: 'hostListings', label: 'My Listings', icon: Building2, route: { name: 'hostListings' } })
     items.push({ key: 'hostNew', label: 'Add Listing', icon: Plus, route: { name: 'hostNew' } })
