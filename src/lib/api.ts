@@ -24,9 +24,60 @@ export const FILIPINO_ALTERNATIVES: FilipinoAlternative[] = [
   { code: 'OTC_BAYAD_CENTER', displayName: 'Bayad Center', description: 'Over-the-counter cash payment option' },
 ]
 
+const EXAMPLE_LISTINGS: Listing[] = [
+  {
+    id: 'demo-baguio-lodge',
+    title: 'Pineview Mountain Lodge',
+    property_type: 'LODGING_HOUSE',
+    location: 'Baguio City, Benguet',
+    nightly_rate: 3200,
+    max_guests: 6,
+    available: true,
+    image_url: null,
+    description: 'A warm mountain lodge with pine views, a shared kitchen, and a quiet garden.',
+    created_at: '2025-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'demo-tagaytay-house',
+    title: 'Taal Ridge Guest House',
+    property_type: 'LODGING_HOUSE',
+    location: 'Tagaytay, Cavite',
+    nightly_rate: 4500,
+    max_guests: 8,
+    available: true,
+    image_url: null,
+    description: 'A spacious guest house for family weekends with a balcony facing the ridge.',
+    created_at: '2025-01-02T00:00:00.000Z',
+  },
+  {
+    id: 'demo-makati-condo',
+    title: 'Skyline Makati Condo',
+    property_type: 'PRIVATE_CONDO',
+    location: 'Makati City, Metro Manila',
+    nightly_rate: 2800,
+    max_guests: 3,
+    available: true,
+    image_url: null,
+    description: 'A bright private condo near dining, shopping, and the Makati business district.',
+    created_at: '2025-01-03T00:00:00.000Z',
+  },
+  {
+    id: 'demo-cebu-condo',
+    title: 'Harborlight Cebu Condo',
+    property_type: 'PRIVATE_CONDO',
+    location: 'Cebu City, Cebu',
+    nightly_rate: 2400,
+    max_guests: 4,
+    available: true,
+    image_url: null,
+    description: 'A comfortable city condo with pool access and easy routes to Cebu attractions.',
+    created_at: '2025-01-04T00:00:00.000Z',
+  },
+]
+
 export const api = {
   async getListings(propertyType?: PropertyType): Promise<Listing[]> {
-    if (!isSupabaseConfigured) return []
+    if (!isSupabaseConfigured) return propertyType ? EXAMPLE_LISTINGS.filter((listing) => listing.property_type === propertyType) : EXAMPLE_LISTINGS
     let query = supabase.from('listings').select('*').order('created_at', { ascending: true })
     if (propertyType) query = query.eq('property_type', propertyType)
     const { data, error } = await query
@@ -35,6 +86,11 @@ export const api = {
   },
 
   async getListing(id: string): Promise<Listing> {
+    if (!isSupabaseConfigured) {
+      const listing = EXAMPLE_LISTINGS.find((item) => item.id === id)
+      if (!listing) throw new ApiError(404, `Listing ${id} was not found`)
+      return listing
+    }
     const { data, error } = await supabase.from('listings').select('*').eq('id', id).maybeSingle()
     if (error) throw new ApiError(500, error.message)
     if (!data) throw new ApiError(404, `Listing ${id} was not found`)

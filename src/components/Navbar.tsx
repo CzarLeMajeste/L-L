@@ -28,9 +28,6 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
     items.push({ key: 'adminAudit', label: 'Audit Logs', icon: KeyRound, route: { name: 'adminAudit' } })
   }
 
-  const roleLabel = role.charAt(0).toUpperCase() + role.slice(1)
-  const roleColor = role === 'client' ? 'bg-brand-600' : role === 'host' ? 'bg-accent-500' : 'bg-ink-900'
-
   return (
     <header className="sticky top-0 z-40 border-b border-ink-100 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -43,9 +40,6 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
               Lodge<span className="text-brand-600">Link</span>
             </span>
           </button>
-          <span className={`hidden rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white sm:inline ${roleColor}`}>
-            {roleLabel}
-          </span>
         </div>
 
         <nav className="hidden items-center gap-1 sm:flex">
