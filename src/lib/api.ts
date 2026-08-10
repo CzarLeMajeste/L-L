@@ -221,7 +221,10 @@ export const api = {
       .select('*')
       .eq('client_id', clientId)
       .maybeSingle()
-    if (error) throw new ApiError(500, error.message)
+    if (error) {
+      if (error.code === 'PGRST205') return null
+      throw new ApiError(500, error.message)
+    }
     return data as ClientVerification | null
   },
 
