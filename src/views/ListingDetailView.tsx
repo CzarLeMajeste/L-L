@@ -15,6 +15,8 @@ export function ListingDetailView({ id, onBack }: Props) {
 
   const [clientId, setClientId] = useState('guest-001')
   const [guestName, setGuestName] = useState('')
+  const [identityVerified, setIdentityVerified] = useState(false)
+  const [verifyingIdentity, setVerifyingIdentity] = useState(false)
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
   const [guests, setGuests] = useState(1)
@@ -46,8 +48,24 @@ export function ListingDetailView({ id, onBack }: Props) {
 
   const totalPrice = listing && nights > 0 ? Number(listing.nightly_rate) * nights : 0
 
+  const verifyIdentity = async () => {
+    setFormError(null)
+    if (!clientId.trim()) return setFormError('Please enter your client ID.')
+    if (!guestName.trim()) return setFormError('Please enter the guest name before verifying.')
+    setVerifyingIdentity(true)
+    try {
+      await api.assertVerifiedClient(clientId.trim())
+      setIdentityVerified(true)
+    } catch (e: any) {
+      setFormError(e.message)
+    } finally {
+      setVerifyingIdentity(false)
+    }
+  }
+
   const submit = async () => {
     setFormError(null)
+    if (!identityVerified) return setFormError('Verify your client ID and name before choosing dates.')
     if (!guestName.trim()) return setFormError('Please enter the guest name.')
     if (!checkIn || !checkOut) return setFormError('Please choose check-in and check-out dates.')
     if (nights < 1) return setFormError('Check-out must be after check-in.')
@@ -153,26 +171,33 @@ export function ListingDetailView({ id, onBack }: Props) {
                 <div className="mt-4 space-y-3">
                   <div>
                     <label className="label">Verified client ID</label>
-                    <input className="input" value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="guest-001" />
+                    <input className="input" value={clientId} onChange={(e) => { setClientId(e.target.value); setIdentityVerified(false) }} placeholder="guest-001" disabled={identityVerified} />
                     <p className="mt-1 text-[11px] text-ink-400">No account needed. Use the ID approved by LodgeLink verification. Preview test ID: guest-001.</p>
                   </div>
                   <div>
                     <label className="label">Guest name</label>
-                    <input className="input" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Juan Dela Cruz" />
+                    <input className="input" value={guestName} onChange={(e) => { setGuestName(e.target.value); setIdentityVerified(false) }} placeholder="Juan Dela Cruz" disabled={identityVerified} />
                   </div>
+                  {!identityVerified && (
+                    <button onClick={verifyIdentity} disabled={verifyingIdentity} className="btn-secondary w-full">
+                      <ShieldCheck className="h-4 w-4" />
+                      {verifyingIdentity ? 'Verifying identity…' : 'Verify ID and name'}
+                    </button>
+                  )}
+                  {identityVerified && <p className="rounded-xl bg-brand-50 px-3 py-2.5 text-xs font-semibold text-brand-700">Identity verified. You can now select your stay dates.</p>}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="label">Check-in</label>
-                      <input type="date" className="input" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} min={new Date().toISOString().slice(0, 10)} />
+                      <input type="date" className="input" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} min={new Date().toISOString().slice(0, 10)} disabled={!identityVerified} />
                     </div>
                     <div>
                       <label className="label">Check-out</label>
-                      <input type="date" className="input" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} min={checkIn || new Date().toISOString().slice(0, 10)} />
+                      <input type="date" className="input" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} min={checkIn || new Date().toISOString().slice(0, 10)} disabled={!identityVerified} />
                     </div>
                   </div>
                   <div>
                     <label className="label">Guests</label>
-                    <select className="input" value={guests} onChange={(e) => setGuests(Number(e.target.value))}>
+                    <select className="input" value={guests} onChange={(e) => setGuests(Number(e.target.value))} disabled={!identityVerified}>
                       {Array.from({ length: listing.max_guests }).map((_, i) => (
                         <option key={i} value={i + 1}>{i + 1} {i === 0 ? 'guest' : 'guests'}</option>
                       ))}
@@ -188,7 +213,7 @@ export function ListingDetailView({ id, onBack }: Props) {
 
                   {formError && <p className="text-xs font-medium text-red-600">{formError}</p>}
 
-                  <button onClick={submit} disabled={submitting || !listing.available} className="btn-primary w-full">
+                  <button onClick={submit} disabled={submitting || !listing.available || !identityVerified} className="btn-primary w-full">
                     <Calendar className="h-4 w-4" />
                     {listing.available ? (submitting ? 'Reserving…' : 'Reserve now') : 'Unavailable'}
                   </button>
