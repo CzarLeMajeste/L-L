@@ -91,7 +91,13 @@ export const api = {
     let query = supabase.from('listings').select('*').order('created_at', { ascending: true })
     if (propertyType) query = query.eq('property_type', propertyType)
     const { data, error } = await query
-    if (error) throw new ApiError(500, error.message)
+    if (error) {
+      if (error.code === 'PGRST205') {
+        const availableExamples = EXAMPLE_LISTINGS.filter((listing) => !isInTurnover(listing.id))
+        return propertyType ? availableExamples.filter((listing) => listing.property_type === propertyType) : availableExamples
+      }
+      throw new ApiError(500, error.message)
+    }
     const listings = data as Listing[]
     if (listings.length === 0) {
       const availableExamples = EXAMPLE_LISTINGS.filter((listing) => !isInTurnover(listing.id))
@@ -107,7 +113,13 @@ export const api = {
       return isInTurnover(id) ? { ...listing, available: false } : listing
     }
     const { data, error } = await supabase.from('listings').select('*').eq('id', id).maybeSingle()
-    if (error) throw new ApiError(500, error.message)
+    if (error) {
+      if (error.code === 'PGRST205') {
+        const example = EXAMPLE_LISTINGS.find((listing) => listing.id === id)
+        if (example) return example
+      }
+      throw new ApiError(500, error.message)
+    }
     if (!data) {
       const example = EXAMPLE_LISTINGS.find((listing) => listing.id === id)
       if (example) return example
