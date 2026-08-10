@@ -37,6 +37,8 @@ export function ExploreView({ filter, onFilter, onOpenListing }: Props) {
   return (
     <div>
       <section className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 px-6 py-12 text-white shadow-lift sm:px-10 sm:py-16">
+        <img src="https://images.pexels.com/photos/17546969/pexels-photo-17546969.jpeg" alt="Cozy Philippine mountain lodge surrounded by greenery" className="absolute inset-0 h-full w-full object-cover opacity-25 mix-blend-screen" />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-800/90 via-brand-700/70 to-brand-700/20" />
         <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
         <div className="absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-accent-400/20 blur-2xl" />
         <div className="relative">
