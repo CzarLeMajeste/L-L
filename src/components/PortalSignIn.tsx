@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft, KeyRound, Shield, LogIn } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import type { Role } from './RoleSelect'
 
 interface Props {
@@ -23,6 +23,10 @@ export function PortalSignIn({ role, onSignedIn, onBack }: Props) {
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!isSupabaseConfigured) {
+      setError('Portal sign-in is unavailable until the Supabase connection is configured.')
+      return
+    }
     setSubmitting(true)
     setError(null)
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })

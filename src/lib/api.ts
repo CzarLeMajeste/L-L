@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { isSupabaseConfigured, supabase } from './supabase'
 import type {
   AuditLog,
   Booking,
@@ -26,6 +26,7 @@ export const FILIPINO_ALTERNATIVES: FilipinoAlternative[] = [
 
 export const api = {
   async getListings(propertyType?: PropertyType): Promise<Listing[]> {
+    if (!isSupabaseConfigured) return []
     let query = supabase.from('listings').select('*').order('created_at', { ascending: true })
     if (propertyType) query = query.eq('property_type', propertyType)
     const { data, error } = await query
@@ -72,6 +73,7 @@ export const api = {
   },
 
   async getBookings(): Promise<Booking[]> {
+    if (!isSupabaseConfigured) return []
     const { data, error } = await supabase
       .from('bookings')
       .select('*, listing:listings(*)')
