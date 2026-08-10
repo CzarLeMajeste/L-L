@@ -33,51 +33,51 @@ const isInTurnover = (listingId: string) => {
 
 const EXAMPLE_LISTINGS: Listing[] = [
   {
-    id: 'demo-baguio-lodge',
-    title: 'Pineview Mountain Lodge',
+    id: 'demo-iloilo-heritage-house',
+    title: 'Casa Iloilo Heritage Stay',
     property_type: 'LODGING_HOUSE',
-    location: 'Baguio City, Benguet',
-    nightly_rate: 3200,
+    location: 'Iloilo City, Iloilo',
+    nightly_rate: 3600,
     max_guests: 6,
     available: true,
-    image_url: 'https://images.pexels.com/photos/17546969/pexels-photo-17546969.jpeg',
-    description: 'A warm mountain lodge with pine views, a shared kitchen, and a quiet garden.',
+    image_url: 'https://images.pexels.com/photos/36930158/pexels-photo-36930158.jpeg',
+    description: 'A character-filled stay near Iloilo heritage streets, local food, and the river esplanade.',
     created_at: '2025-01-01T00:00:00.000Z',
   },
   {
-    id: 'demo-tagaytay-house',
-    title: 'Taal Ridge Guest House',
+    id: 'demo-antique-hillside-lodge',
+    title: 'Tibiao Hillside Lodge',
     property_type: 'LODGING_HOUSE',
-    location: 'Tagaytay, Cavite',
-    nightly_rate: 4500,
-    max_guests: 8,
+    location: 'Tibiao, Antique',
+    nightly_rate: 2900,
+    max_guests: 5,
     available: true,
-    image_url: 'https://images.pexels.com/photos/27582015/pexels-photo-27582015.jpeg',
-    description: 'A spacious guest house for family weekends with a balcony facing the ridge.',
+    image_url: 'https://images.pexels.com/photos/29793237/pexels-photo-29793237.jpeg',
+    description: 'A peaceful hillside base for rivers, hot kawa baths, and the green mountains of Antique.',
     created_at: '2025-01-02T00:00:00.000Z',
   },
   {
-    id: 'demo-makati-condo',
-    title: 'Skyline Makati Condo',
+    id: 'demo-boracay-coastal-condo',
+    title: 'White Beach Coastal Condo',
     property_type: 'PRIVATE_CONDO',
-    location: 'Makati City, Metro Manila',
-    nightly_rate: 2800,
-    max_guests: 3,
+    location: 'Malay, Aklan',
+    nightly_rate: 5200,
+    max_guests: 4,
     available: true,
-    image_url: 'https://images.pexels.com/photos/22743872/pexels-photo-22743872.jpeg',
-    description: 'A bright private condo near dining, shopping, and the Makati business district.',
+    image_url: 'https://images.pexels.com/photos/10085110/pexels-photo-10085110.jpeg',
+    description: 'A bright private condo near Boracay sunsets, island dining, and White Beach access.',
     created_at: '2025-01-03T00:00:00.000Z',
   },
   {
-    id: 'demo-cebu-condo',
-    title: 'Harborlight Cebu Condo',
+    id: 'demo-roxas-bay-condo',
+    title: 'Roxas Bayfront Condo',
     property_type: 'PRIVATE_CONDO',
-    location: 'Cebu City, Cebu',
-    nightly_rate: 2400,
-    max_guests: 4,
+    location: 'Roxas City, Capiz',
+    nightly_rate: 2600,
+    max_guests: 3,
     available: true,
-    image_url: 'https://images.pexels.com/photos/22743872/pexels-photo-22743872.jpeg',
-    description: 'A comfortable city condo with pool access and easy routes to Cebu attractions.',
+    image_url: 'https://images.pexels.com/photos/38186695/pexels-photo-38186695.jpeg',
+    description: 'A relaxed coastal condo close to Roxas seafood markets and the bayfront promenade.',
     created_at: '2025-01-04T00:00:00.000Z',
   },
 ]
@@ -92,7 +92,12 @@ export const api = {
     if (propertyType) query = query.eq('property_type', propertyType)
     const { data, error } = await query
     if (error) throw new ApiError(500, error.message)
-    return (data as Listing[]).map((listing) => isInTurnover(listing.id) ? { ...listing, available: false } : listing)
+    const listings = data as Listing[]
+    if (listings.length === 0) {
+      const availableExamples = EXAMPLE_LISTINGS.filter((listing) => !isInTurnover(listing.id))
+      return propertyType ? availableExamples.filter((listing) => listing.property_type === propertyType) : availableExamples
+    }
+    return listings.map((listing) => isInTurnover(listing.id) ? { ...listing, available: false } : listing)
   },
 
   async getListing(id: string): Promise<Listing> {
@@ -103,8 +108,12 @@ export const api = {
     }
     const { data, error } = await supabase.from('listings').select('*').eq('id', id).maybeSingle()
     if (error) throw new ApiError(500, error.message)
-    if (!data) throw new ApiError(404, `Listing ${id} was not found`)
-    return data as Listing
+    if (!data) {
+      const example = EXAMPLE_LISTINGS.find((listing) => listing.id === id)
+      if (example) return example
+      throw new ApiError(404, `Listing ${id} was not found`)
+    }
+    return isInTurnover(id) ? { ...(data as Listing), available: false } : data as Listing
   },
 
   async createListing(input: NewListingInput): Promise<Listing> {
