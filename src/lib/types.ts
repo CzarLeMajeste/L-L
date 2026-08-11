@@ -13,6 +13,13 @@ export interface Listing {
   description: string | null
   included_amenities?: string[]
   nearby_attractions?: string[]
+  rooms_available?: number
+  room_capacity?: number
+  rental_mode?: 'MONTHLY' | 'TRANSIENT' | 'BOTH'
+  partner_status?: 'UNVERIFIED_STUDENT' | 'VERIFIED_PARTNER'
+  moderator_enabled?: boolean
+  community_events?: string[]
+  created_by?: string
   created_at: string
 }
 
@@ -25,6 +32,9 @@ export interface NewListingInput {
   available: boolean
   image_url?: string
   description?: string
+  rooms_available?: number
+  room_capacity?: number
+  rental_mode?: 'MONTHLY' | 'TRANSIENT' | 'BOTH'
 }
 
 export interface Booking {

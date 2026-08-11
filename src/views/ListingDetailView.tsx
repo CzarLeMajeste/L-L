@@ -144,7 +144,7 @@ export function ListingDetailView({ id, onBack, onCommunity }: Props) {
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">{listing.title}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-ink-500">
               <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {listing.location}</span>
-              <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> Up to {listing.max_guests} guests</span>
+              <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> {listing.rooms_available ?? 1} rooms · {listing.room_capacity ?? listing.max_guests} boarders/room</span>
               <span className="flex items-center gap-1.5">
                 <span className={`h-2 w-2 rounded-full ${listing.available ? 'bg-brand-500' : 'bg-ink-300'}`} />
                 {listing.available ? 'Available' : 'Unavailable'}
@@ -153,6 +153,11 @@ export function ListingDetailView({ id, onBack, onCommunity }: Props) {
             {listing.description && <p className="mt-4 text-sm leading-relaxed text-ink-600">{listing.description}</p>}
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               {(listing.included_amenities ?? ['Wi-Fi included', 'Water included', 'Study-friendly common area', 'Shared kitchen']).map((amenity) => <span key={amenity} className="rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700">{amenity}</span>)}
+            </div>
+            <div className="mt-5 rounded-2xl bg-ink-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Rental options</p>
+              <p className="mt-1 text-sm font-semibold text-ink-800">{listing.rental_mode === 'TRANSIENT' ? 'Transient stays' : listing.rental_mode === 'BOTH' ? 'Monthly and transient stays' : 'Monthly boarder rental'}</p>
+              <p className="mt-1 text-xs text-ink-500">{listing.rooms_available ?? 1} room{(listing.rooms_available ?? 1) === 1 ? '' : 's'} currently available · {listing.room_capacity ?? listing.max_guests} boarders per room.</p>
             </div>
             <div className="mt-5 rounded-2xl bg-accent-50 p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-accent-700">Why boarders choose this area</p>
@@ -174,7 +179,7 @@ export function ListingDetailView({ id, onBack, onCommunity }: Props) {
                 <span className="font-display text-2xl font-extrabold text-ink-900">
                   ₱{monthlyRate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                 </span>
-                <span className="text-xs text-ink-400">per month</span>
+                <span className="text-xs text-ink-400">{listing.rental_mode === 'TRANSIENT' ? 'per night' : listing.rental_mode === 'BOTH' ? 'monthly · transient available' : 'per month'}</span>
               </div>
 
               {!booking ? (

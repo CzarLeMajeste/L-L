@@ -1,5 +1,6 @@
 import { MapPin, Users, Star } from 'lucide-react'
 import type { Listing } from '../lib/types'
+import { BadgeCheck, ShieldAlert } from 'lucide-react'
 
 interface Props {
   listing: Listing
@@ -26,7 +27,7 @@ export function ListingCard({ listing, onOpen, index = 0 }: Props) {
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-ink-100 text-ink-400">No image</div>
         )}
-        <div className="absolute left-3 top-3">
+        <div className="absolute left-3 top-3 flex flex-col items-start gap-1">
           <span
             className={`chip backdrop-blur-md ${
               listing.property_type === 'LODGING_HOUSE'
@@ -36,6 +37,10 @@ export function ListingCard({ listing, onOpen, index = 0 }: Props) {
           >
             {typeLabel}
           </span>
+          <span className={`chip px-2 py-0.5 text-[10px] ${listing.partner_status === 'VERIFIED_PARTNER' ? 'bg-white text-brand-700' : 'bg-ink-900/75 text-white'}`}>
+            {listing.partner_status === 'VERIFIED_PARTNER' ? <><BadgeCheck className="h-3 w-3" /> Verified partner</> : <><ShieldAlert className="h-3 w-3" /> Student community</>}
+          </span>
+          {listing.moderator_enabled && <span className="chip bg-accent-500 text-white px-2 py-0.5 text-[10px]">Events enabled</span>}
         </div>
         {!listing.available && (
           <div className="absolute inset-0 flex items-center justify-center bg-ink-900/40">
@@ -55,9 +60,12 @@ export function ListingCard({ listing, onOpen, index = 0 }: Props) {
           <MapPin className="h-3.5 w-3.5" />
           {listing.location}
         </div>
-        <div className="mt-2 flex items-center gap-1 text-xs text-ink-500">
-          <Users className="h-3.5 w-3.5" />
-          Up to {listing.max_guests} boarders
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-ink-500">
+          <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {listing.rooms_available ?? 1} rooms available</span>
+          <span>{listing.room_capacity ?? listing.max_guests} boarders / room</span>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <span className="chip bg-accent-50 px-2 py-0.5 text-[10px] text-accent-700">{listing.rental_mode === 'TRANSIENT' ? 'Transient' : listing.rental_mode === 'BOTH' ? 'Monthly + transient' : 'Monthly'}</span>
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {(listing.included_amenities ?? ['Wi-Fi', 'Water'])?.slice(0, 2).map((amenity) => <span key={amenity} className="chip bg-brand-50 px-2 py-0.5 text-[10px] text-brand-700">{amenity}</span>)}

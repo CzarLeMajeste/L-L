@@ -166,10 +166,43 @@ const EXAMPLE_LISTINGS: Listing[] = [
   },
 ]
 
+const getStudentCommunities = (): Listing[] => JSON.parse(localStorage.getItem('student-communities') ?? '[]')
+const displayExamples = EXAMPLE_LISTINGS.map((listing, index) => ({
+  ...listing,
+  partner_status: index < 2 ? 'VERIFIED_PARTNER' as const : 'UNVERIFIED_STUDENT' as const,
+  moderator_enabled: index < 2,
+  community_events: index < 2 ? ['Boarder orientation'] : [],
+  rooms_available: index % 3 + 1,
+  room_capacity: listing.max_guests,
+  rental_mode: index % 3 === 0 ? 'BOTH' as const : 'MONTHLY' as const,
+}))
+
 export const api = {
+  async createStudentCommunity(input: Pick<Listing, 'title' | 'location' | 'description' | 'monthly_rate' | 'max_guests' | 'image_url'>): Promise<Listing> {
+    const community: Listing = {
+      id: `student-community-${crypto.randomUUID()}`,
+      title: input.title,
+      property_type: 'LODGING_HOUSE',
+      location: input.location,
+      nightly_rate: input.monthly_rate ?? 0,
+      monthly_rate: input.monthly_rate,
+      max_guests: input.max_guests ?? 1,
+      available: true,
+      image_url: input.image_url ?? null,
+      description: input.description ?? null,
+      partner_status: 'UNVERIFIED_STUDENT',
+      moderator_enabled: false,
+      community_events: [],
+      created_by: 'student-boarder',
+      created_at: new Date().toISOString(),
+    }
+    localStorage.setItem('student-communities', JSON.stringify([community, ...getStudentCommunities()]))
+    return community
+  },
+
   async getListings(propertyType?: PropertyType): Promise<Listing[]> {
     if (!isSupabaseConfigured) {
-      const availableExamples = EXAMPLE_LISTINGS.filter((listing) => !isInTurnover(listing.id))
+      const availableExamples = [...getStudentCommunities(), ...displayExamples].filter((listing) => !isInTurnover(listing.id))
       return propertyType ? availableExamples.filter((listing) => listing.property_type === propertyType) : availableExamples
     }
     let query = supabase.from('listings').select('*').order('created_at', { ascending: true })
@@ -177,33 +210,33 @@ export const api = {
     const { data, error } = await query
     if (error) {
       if (error.code === 'PGRST205') {
-        const availableExamples = EXAMPLE_LISTINGS.filter((listing) => !isInTurnover(listing.id))
+        const availableExamples = [...getStudentCommunities(), ...displayExamples].filter((listing) => !isInTurnover(listing.id))
         return propertyType ? availableExamples.filter((listing) => listing.property_type === propertyType) : availableExamples
       }
       throw new ApiError(500, error.message)
     }
     const listings = data as Listing[]
-    const mergedListings = [...listings, ...EXAMPLE_LISTINGS.filter((example) => !listings.some((listing) => listing.id === example.id))]
+    const mergedListings = [...listings, ...getStudentCommunities(), ...displayExamples.filter((example) => !listings.some((listing) => listing.id === example.id))]
     const availableListings = mergedListings.map((listing) => isInTurnover(listing.id) ? { ...listing, available: false } : listing)
     return propertyType ? availableListings.filter((listing) => listing.property_type === propertyType) : availableListings
   },
 
   async getListing(id: string): Promise<Listing> {
     if (!isSupabaseConfigured) {
-      const listing = EXAMPLE_LISTINGS.find((item) => item.id === id)
+      const listing = displayExamples.find((item) => item.id === id)
       if (!listing) throw new ApiError(404, `Listing ${id} was not found`)
       return isInTurnover(id) ? { ...listing, available: false } : listing
     }
     const { data, error } = await supabase.from('listings').select('*').eq('id', id).maybeSingle()
     if (error) {
       if (error.code === 'PGRST205') {
-        const example = EXAMPLE_LISTINGS.find((listing) => listing.id === id)
+        const example = displayExamples.find((listing) => listing.id === id)
         if (example) return example
       }
       throw new ApiError(500, error.message)
     }
     if (!data) {
-      const example = EXAMPLE_LISTINGS.find((listing) => listing.id === id)
+      const example = displayExamples.find((listing) => listing.id === id)
       if (example) return example
       throw new ApiError(404, `Listing ${id} was not found`)
     }

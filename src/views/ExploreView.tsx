@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Home, Search, SlidersHorizontal } from 'lucide-react'
+import { Home, Search, SlidersHorizontal, Plus, ShieldAlert } from 'lucide-react'
 import { api } from '../lib/api'
 import type { Listing, PropertyType } from '../lib/types'
 import { ListingCard } from '../components/ListingCard'
@@ -14,6 +14,8 @@ export function ExploreView({ filter, onFilter, onOpenListing }: Props) {
   const [listings, setListings] = useState<Listing[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [showCreate, setShowCreate] = useState(false)
+  const [refreshToken, setRefreshToken] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -26,7 +28,7 @@ export function ExploreView({ filter, onFilter, onOpenListing }: Props) {
     return () => {
       active = false
     }
-  }, [filter])
+  }, [filter, refreshToken])
 
   const filtered = (listings ?? []).filter((l) => {
     if (!query.trim()) return true
@@ -74,10 +76,13 @@ export function ExploreView({ filter, onFilter, onOpenListing }: Props) {
             />
           </div>
         </div>
-        <span className="text-xs font-semibold text-ink-400">
-          {listings ? `${filtered.length} ${filtered.length === 1 ? 'stay' : 'stays'}` : 'Loading…'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-ink-400">{listings ? `${filtered.length} ${filtered.length === 1 ? 'house' : 'houses'}` : 'Loading…'}</span>
+          <button onClick={() => setShowCreate((open) => !open)} className="btn-secondary px-3 py-2 text-xs"><Plus className="h-3.5 w-3.5" /> Add a house</button>
+        </div>
       </div>
+
+      {showCreate && <CreateCommunityPanel onCreated={() => { setShowCreate(false); setRefreshToken((value) => value + 1) }} />}
 
       {error && (
         <div className="card animate-fade-up p-6 text-center text-sm text-red-600">
@@ -116,6 +121,19 @@ export function ExploreView({ filter, onFilter, onOpenListing }: Props) {
       )}
     </div>
   )
+}
+
+function CreateCommunityPanel({ onCreated }: { onCreated: () => void }) {
+  const [title, setTitle] = useState('')
+  const [location, setLocation] = useState('')
+  const [monthlyRate, setMonthlyRate] = useState('')
+  const [description, setDescription] = useState('')
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    await api.createStudentCommunity({ title, location, monthly_rate: Number(monthlyRate), max_guests: 4, description, image_url: null })
+    onCreated()
+  }
+  return <form onSubmit={submit} className="card mb-5 grid gap-3 p-5 sm:grid-cols-2"><div className="sm:col-span-2"><div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-accent-600" /><p className="text-sm font-semibold text-ink-900">Suggest a boarding house community</p></div><p className="mt-1 text-xs text-ink-500">Student-created communities are marked unverified until a partner confirms the house.</p></div><input className="input" placeholder="Boarding house name" value={title} onChange={(event) => setTitle(event.target.value)} required /><input className="input" placeholder="Location near University of Antique" value={location} onChange={(event) => setLocation(event.target.value)} required /><input className="input" type="number" min="0" placeholder="Monthly rate" value={monthlyRate} onChange={(event) => setMonthlyRate(event.target.value)} required /><input className="input" placeholder="What attracts students?" value={description} onChange={(event) => setDescription(event.target.value)} required /><button className="btn-primary sm:col-span-2" type="submit">Create unverified community</button></form>
 }
 
 function FilterPill({
