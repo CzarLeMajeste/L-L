@@ -42,7 +42,7 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal, onBoarde
           </button>
         </div>
 
-        <nav className="hidden items-center gap-1 sm:flex">
+        <nav className="hidden items-center gap-2 sm:flex">
           {items.map(({ key, label, icon: Icon, route: r }) => {
             const active = route.name === key
             return (
@@ -59,13 +59,13 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal, onBoarde
             )
           })}
           {role === 'client' ? (
-            <div className="relative ml-2">
-              <button onClick={() => setPortalOpen((open) => !open)} className="flex items-center gap-2 rounded-xl bg-ink-900 px-3.5 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-800" aria-expanded={portalOpen}>
+            <div className="relative ml-2 flex shrink-0 items-center gap-1 border-l border-ink-200 pl-3">
+              <button onClick={() => setPortalOpen((open) => !open)} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-ink-900 px-3.5 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-800" aria-expanded={portalOpen}>
                 Partner portal
                 <ChevronDown className={`h-4 w-4 transition-transform ${portalOpen ? 'rotate-180' : ''}`} />
               </button>
               {portalOpen && <PortalMenu onOpenPortal={onOpenPortal} onClose={() => setPortalOpen(false)} />}
-              <button onClick={onBoarderAccess} className="ml-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-brand-700 transition-all hover:bg-brand-50">Boarder sign in</button>
+              <button onClick={onBoarderAccess} className="shrink-0 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold text-brand-700 transition-all hover:bg-brand-50">Boarder sign in</button>
             </div>
           ) : (
             <button onClick={onExit} className="ml-2 flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-400 transition-all hover:bg-red-50 hover:text-red-600">
@@ -92,7 +92,7 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal, onBoarde
             )
           })}
           {role === 'client' ? (
-            <div className="relative">
+            <div className="relative flex items-center gap-1">
               <button onClick={() => setPortalOpen((open) => !open)} className="flex h-9 items-center justify-center rounded-xl px-2 text-xs font-semibold text-ink-600 hover:bg-ink-100" aria-label="Open partner portal" aria-expanded={portalOpen}>
                 Portal
               </button>
