@@ -82,6 +82,66 @@ const EXAMPLE_LISTINGS: Listing[] = [
     description: 'A simple boarder home with quiet hours, reliable water, and a welcoming student community.',
     created_at: '2025-01-04T00:00:00.000Z',
   },
+  {
+    id: 'demo-sibalom-acacia-house',
+    title: 'Acacia Lane Boarders House',
+    property_type: 'LODGING_HOUSE',
+    location: 'Sibalom, Antique · Acacia Lane',
+    nightly_rate: 2500,
+    max_guests: 4,
+    available: true,
+    image_url: 'https://images.pexels.com/photos/27582015/pexels-photo-27582015.jpeg',
+    description: 'A friendly four-room house with a shaded outdoor area and shared study table.',
+    created_at: '2025-01-05T00:00:00.000Z',
+  },
+  {
+    id: 'demo-sibalom-palengke-rooms',
+    title: 'Palengke Side Rooms',
+    property_type: 'LODGING_HOUSE',
+    location: 'Sibalom, Antique · near the public market',
+    nightly_rate: 2200,
+    max_guests: 3,
+    available: true,
+    image_url: 'https://images.pexels.com/photos/36930158/pexels-photo-36930158.jpeg',
+    description: 'Convenient rooms for boarders who want groceries, food stalls, and transport nearby.',
+    created_at: '2025-01-06T00:00:00.000Z',
+  },
+  {
+    id: 'demo-sibalom-green-courtyard',
+    title: 'Green Courtyard Boarding House',
+    property_type: 'LODGING_HOUSE',
+    location: 'Sibalom, Antique · Barangay 3',
+    nightly_rate: 3100,
+    max_guests: 5,
+    available: true,
+    image_url: 'https://images.pexels.com/photos/29793237/pexels-photo-29793237.jpeg',
+    description: 'A breezy shared home with a green courtyard and a calm setup for weekday study.',
+    created_at: '2025-01-07T00:00:00.000Z',
+  },
+  {
+    id: 'demo-sibalom-mango-house',
+    title: 'Mango Tree Boarder Home',
+    property_type: 'LODGING_HOUSE',
+    location: 'Sibalom, Antique · campus tricycle route',
+    nightly_rate: 2700,
+    max_guests: 4,
+    available: true,
+    image_url: 'https://images.pexels.com/photos/10085110/pexels-photo-10085110.jpeg',
+    description: 'A practical home with shared kitchen access and a direct tricycle route to campus.',
+    created_at: '2025-01-08T00:00:00.000Z',
+  },
+  {
+    id: 'demo-sibalom-sunrise-rooms',
+    title: 'Sunrise Street Rooms',
+    property_type: 'LODGING_HOUSE',
+    location: 'Sibalom, Antique · east campus area',
+    nightly_rate: 2400,
+    max_guests: 3,
+    available: true,
+    image_url: 'https://images.pexels.com/photos/38186695/pexels-photo-38186695.jpeg',
+    description: 'Affordable private rooms with bright mornings and a small community of student boarders.',
+    created_at: '2025-01-09T00:00:00.000Z',
+  },
 ]
 
 export const api = {
@@ -101,11 +161,9 @@ export const api = {
       throw new ApiError(500, error.message)
     }
     const listings = data as Listing[]
-    if (listings.length === 0) {
-      const availableExamples = EXAMPLE_LISTINGS.filter((listing) => !isInTurnover(listing.id))
-      return propertyType ? availableExamples.filter((listing) => listing.property_type === propertyType) : availableExamples
-    }
-    return listings.map((listing) => isInTurnover(listing.id) ? { ...listing, available: false } : listing)
+    const mergedListings = [...listings, ...EXAMPLE_LISTINGS.filter((example) => !listings.some((listing) => listing.id === example.id))]
+    const availableListings = mergedListings.map((listing) => isInTurnover(listing.id) ? { ...listing, available: false } : listing)
+    return propertyType ? availableListings.filter((listing) => listing.property_type === propertyType) : availableListings
   },
 
   async getListing(id: string): Promise<Listing> {
