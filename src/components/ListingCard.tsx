@@ -59,12 +59,15 @@ export function ListingCard({ listing, onOpen, index = 0 }: Props) {
           <Users className="h-3.5 w-3.5" />
           Up to {listing.max_guests} boarders
         </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {(listing.included_amenities ?? ['Wi-Fi', 'Water'])?.slice(0, 2).map((amenity) => <span key={amenity} className="chip bg-brand-50 px-2 py-0.5 text-[10px] text-brand-700">{amenity}</span>)}
+        </div>
         <div className="mt-3 flex items-end justify-between">
           <div>
             <span className="font-display text-lg font-extrabold text-ink-900">
-              ₱{Number(listing.nightly_rate).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              ₱{Number(listing.monthly_rate ?? listing.nightly_rate).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
             </span>
-            <span className="text-xs text-ink-400"> / night</span>
+            <span className="text-xs text-ink-400"> / month</span>
           </div>
           <span className="text-xs font-semibold text-brand-600 opacity-0 transition-opacity group-hover:opacity-100">
             View house →

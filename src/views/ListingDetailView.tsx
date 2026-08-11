@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, MapPin, Users, Calendar, Check, ShieldCheck, QrCode, Wallet } from 'lucide-react'
+import { ArrowLeft, MapPin, Users, Calendar, Check, ShieldCheck, QrCode, Wallet, MessageCircle } from 'lucide-react'
 import { api, FILIPINO_ALTERNATIVES } from '../lib/api'
 import type { Booking, InstapayPayment, Listing } from '../lib/types'
 import { QRCode } from '../components/QRCode'
@@ -7,9 +7,10 @@ import { QRCode } from '../components/QRCode'
 interface Props {
   id: string
   onBack: () => void
+  onCommunity: () => void
 }
 
-export function ListingDetailView({ id, onBack }: Props) {
+export function ListingDetailView({ id, onBack, onCommunity }: Props) {
   const [listing, setListing] = useState<Listing | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,7 +47,8 @@ export function ListingDetailView({ id, onBack }: Props) {
     return Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86_400_000)
   }, [checkIn, checkOut])
 
-  const totalPrice = listing && nights > 0 ? Number(listing.nightly_rate) * nights : 0
+  const monthlyRate = listing ? Number(listing.monthly_rate ?? listing.nightly_rate) : 0
+  const totalPrice = listing && nights > 0 ? monthlyRate * Math.max(1, Math.ceil(nights / 30)) : 0
 
   const verifyIdentity = async () => {
     setFormError(null)
@@ -149,8 +151,16 @@ export function ListingDetailView({ id, onBack }: Props) {
               </span>
             </div>
             {listing.description && <p className="mt-4 text-sm leading-relaxed text-ink-600">{listing.description}</p>}
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              {(listing.included_amenities ?? ['Wi-Fi included', 'Water included', 'Study-friendly common area', 'Shared kitchen']).map((amenity) => <span key={amenity} className="rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700">{amenity}</span>)}
+            </div>
+            <div className="mt-5 rounded-2xl bg-accent-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-accent-700">Why boarders choose this area</p>
+              <p className="mt-1 text-sm leading-relaxed text-accent-800">{(listing.nearby_attractions ?? ['University of Antique campus', 'Campus transport routes', 'Affordable food nearby']).join(' · ')}</p>
+            </div>
+            <button onClick={onCommunity} className="btn-secondary mt-5"><MessageCircle className="h-4 w-4" /> Join this house community</button>
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {['Free Wi-Fi', 'Self check-in', 'Kitchen', 'Hot shower', 'Parking', 'Pet-friendly'].map((a) => (
+              {['Quiet hours', 'Visitor rules', 'Laundry area', 'Drinking water', 'Study desk', 'Secure entry'].map((a) => (
                 <div key={a} className="flex items-center gap-2 rounded-xl bg-ink-50 px-3 py-2 text-xs font-medium text-ink-600">
                   <Check className="h-3.5 w-3.5 text-brand-600" /> {a}
                 </div>
@@ -162,9 +172,9 @@ export function ListingDetailView({ id, onBack }: Props) {
             <div className="card p-5 ring-1 ring-ink-200">
               <div className="flex items-baseline justify-between">
                 <span className="font-display text-2xl font-extrabold text-ink-900">
-                  ₱{Number(listing.nightly_rate).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                  ₱{monthlyRate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                 </span>
-                <span className="text-xs text-ink-400">per night</span>
+                <span className="text-xs text-ink-400">per month</span>
               </div>
 
               {!booking ? (
@@ -206,7 +216,7 @@ export function ListingDetailView({ id, onBack }: Props) {
 
                   {nights > 0 && (
                     <div className="flex items-center justify-between rounded-xl bg-ink-50 px-3.5 py-2.5 text-sm">
-                      <span className="text-ink-500">₱{Number(listing.nightly_rate).toFixed(2)} × {nights} {nights === 1 ? 'night' : 'nights'}</span>
+                      <span className="text-ink-500">₱{monthlyRate.toFixed(2)} monthly board · {Math.max(1, Math.ceil(nights / 30))} {Math.max(1, Math.ceil(nights / 30)) === 1 ? 'month' : 'months'}</span>
                       <span className="font-display font-bold text-ink-900">₱{totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}

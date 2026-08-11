@@ -9,13 +9,15 @@ interface Props {
   onNavigate: (r: Route) => void
   onExit: () => void
   onOpenPortal: (role: Extract<Role, 'host' | 'admin'>) => void
+  onBoarderAccess: () => void
 }
 
-export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props) {
+export function Navbar({ route, role, onNavigate, onExit, onOpenPortal, onBoarderAccess }: Props) {
   const [portalOpen, setPortalOpen] = useState(false)
   const items: { key: string; label: string; icon: typeof Sparkles; route: Route }[] = []
 
   if (role === 'client') {
+    items.push({ key: 'explore', label: 'Boarding houses', icon: Building2, route: { name: 'explore' } })
   } else if (role === 'host') {
     items.push({ key: 'hostListings', label: 'My Listings', icon: Building2, route: { name: 'hostListings' } })
     items.push({ key: 'hostNew', label: 'Add Listing', icon: Plus, route: { name: 'hostNew' } })
@@ -63,6 +65,7 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
                 <ChevronDown className={`h-4 w-4 transition-transform ${portalOpen ? 'rotate-180' : ''}`} />
               </button>
               {portalOpen && <PortalMenu onOpenPortal={onOpenPortal} onClose={() => setPortalOpen(false)} />}
+              <button onClick={onBoarderAccess} className="ml-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-brand-700 transition-all hover:bg-brand-50">Boarder sign in</button>
             </div>
           ) : (
             <button onClick={onExit} className="ml-2 flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-400 transition-all hover:bg-red-50 hover:text-red-600">
@@ -94,6 +97,7 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
                 Portal
               </button>
               {portalOpen && <PortalMenu onOpenPortal={onOpenPortal} onClose={() => setPortalOpen(false)} />}
+              <button onClick={onBoarderAccess} className="flex h-9 items-center justify-center rounded-xl px-2 text-xs font-semibold text-brand-700 hover:bg-brand-50" aria-label="Boarder sign in">Join</button>
             </div>
           ) : (
             <button onClick={onExit} className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-400 hover:bg-red-50 hover:text-red-600" aria-label="Sign out">

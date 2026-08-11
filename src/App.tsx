@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { Role } from './components/RoleSelect'
 import { Navbar } from './components/Navbar'
+import { BoarderAccess } from './components/BoarderAccess'
+import type { BoarderProfile } from './components/BoarderAccess'
 import { PortalSignIn } from './components/PortalSignIn'
 import { ExploreView } from './views/ExploreView'
 import { ListingDetailView } from './views/ListingDetailView'
+import { CommunityView } from './views/CommunityView'
 import { HostView } from './views/HostView'
 import { HostListingsView } from './views/HostListingsView'
 import { HostBookingsView } from './views/HostBookingsView'
@@ -16,6 +19,7 @@ import type { PropertyType } from './lib/types'
 export type Route =
   | { name: 'explore' }
   | { name: 'listing'; id: string }
+  | { name: 'community'; id: string }
   | { name: 'hostListings' }
   | { name: 'hostNew' }
   | { name: 'hostBookings' }
@@ -28,12 +32,14 @@ type Portal = Extract<Role, 'host' | 'admin'>
 export default function App() {
   const [role, setRole] = useState<Role>('client')
   const [portal, setPortal] = useState<Portal | null>(() => (window.location.pathname === '/admin' ? 'host' : null))
+  const [boarderAccess, setBoarderAccess] = useState(false)
+  const [boarderProfile, setBoarderProfile] = useState<BoarderProfile | null>(() => JSON.parse(localStorage.getItem('boarder-profile') ?? 'null'))
   const [route, setRoute] = useState<Route>({ name: 'explore' })
   const [filter, setFilter] = useState<PropertyType | undefined>(undefined)
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [route, portal])
+  }, [route, portal, boarderAccess])
 
   const openPortal = (nextPortal: Portal) => {
     setPortal(nextPortal)
@@ -56,14 +62,19 @@ export default function App() {
     return <PortalSignIn role={portal} onSignedIn={enterPortal} onBack={() => setPortal(null)} />
   }
 
+  if (boarderAccess) {
+    return <BoarderAccess onDone={(profile) => { setBoarderProfile(profile); setBoarderAccess(false) }} onBack={() => setBoarderAccess(false)} />
+  }
+
   return (
     <div className="min-h-full">
-      <Navbar route={route} role={role} onNavigate={setRoute} onExit={exitPortal} onOpenPortal={openPortal} />
+      <Navbar route={route} role={role} onNavigate={setRoute} onExit={exitPortal} onOpenPortal={openPortal} onBoarderAccess={() => setBoarderAccess(true)} />
       <main className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
         {role === 'client' && (
           <>
             {route.name === 'explore' && <ExploreView filter={filter} onFilter={setFilter} onOpenListing={(id) => setRoute({ name: 'listing', id })} />}
-            {route.name === 'listing' && <ListingDetailView id={route.id} onBack={() => setRoute({ name: 'explore' })} />}
+            {route.name === 'listing' && <ListingDetailView id={route.id} onBack={() => setRoute({ name: 'explore' })} onCommunity={() => setRoute({ name: 'community', id: route.id })} />}
+            {route.name === 'community' && <CommunityView listing={{ id: route.id, title: 'Boarding house community', property_type: 'LODGING_HOUSE', location: 'University of Antique area', nightly_rate: 0, max_guests: 1, available: true, image_url: null, description: null, created_at: new Date().toISOString() }} profile={boarderProfile} onBack={() => setRoute({ name: 'explore' })} onSignIn={() => setBoarderAccess(true)} />}
           </>
         )}
         {role === 'host' && (

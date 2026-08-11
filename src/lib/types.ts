@@ -6,10 +6,13 @@ export interface Listing {
   property_type: PropertyType
   location: string
   nightly_rate: number
+  monthly_rate?: number
   max_guests: number
   available: boolean
   image_url: string | null
   description: string | null
+  included_amenities?: string[]
+  nearby_attractions?: string[]
   created_at: string
 }
 
