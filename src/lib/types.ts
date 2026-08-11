@@ -23,6 +23,10 @@ export interface Listing {
   created_at: string
 }
 
+export function hasRentalSpace(listing: Pick<Listing, 'rooms_available' | 'room_capacity' | 'max_guests'>): boolean {
+  return (listing.rooms_available ?? 1) > 0 && (listing.room_capacity ?? listing.max_guests) > 0
+}
+
 export interface NewListingInput {
   title: string
   property_type: PropertyType

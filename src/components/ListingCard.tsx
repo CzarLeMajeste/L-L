@@ -1,5 +1,5 @@
 import { MapPin, Users, Star } from 'lucide-react'
-import type { Listing } from '../lib/types'
+import { hasRentalSpace, type Listing } from '../lib/types'
 import { BadgeCheck, ShieldAlert } from 'lucide-react'
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
 
 export function ListingCard({ listing, onOpen, index = 0 }: Props) {
   const typeLabel = listing.property_type === 'LODGING_HOUSE' ? 'Boarding House' : 'Private Room'
+  const unavailable = !hasRentalSpace(listing)
   return (
     <button
       onClick={() => onOpen(listing.id)}
@@ -42,7 +43,7 @@ export function ListingCard({ listing, onOpen, index = 0 }: Props) {
           </span>
           {listing.moderator_enabled && <span className="chip bg-accent-500 text-white px-2 py-0.5 text-[10px]">Events enabled</span>}
         </div>
-        {!listing.available && (
+        {unavailable && (
           <div className="absolute inset-0 flex items-center justify-center bg-ink-900/40">
             <span className="chip bg-white text-ink-800">Unavailable</span>
           </div>

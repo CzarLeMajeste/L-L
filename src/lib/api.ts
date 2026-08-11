@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from './supabase'
+import { hasRentalSpace } from './types'
 import type {
   AuditLog,
   Booking,
@@ -217,7 +218,7 @@ export const api = {
     }
     const listings = data as Listing[]
     const mergedListings = [...listings, ...getStudentCommunities(), ...displayExamples.filter((example) => !listings.some((listing) => listing.id === example.id))]
-    const availableListings = mergedListings.map((listing) => isInTurnover(listing.id) ? { ...listing, available: false } : listing)
+    const availableListings = mergedListings.map((listing) => isInTurnover(listing.id) ? { ...listing, available: false, rooms_available: 0 } : listing)
     return propertyType ? availableListings.filter((listing) => listing.property_type === propertyType) : availableListings
   },
 
@@ -225,7 +226,7 @@ export const api = {
     if (!isSupabaseConfigured) {
       const listing = displayExamples.find((item) => item.id === id)
       if (!listing) throw new ApiError(404, `Listing ${id} was not found`)
-      return isInTurnover(id) ? { ...listing, available: false } : listing
+      return isInTurnover(id) ? { ...listing, available: false, rooms_available: 0 } : listing
     }
     const { data, error } = await supabase.from('listings').select('*').eq('id', id).maybeSingle()
     if (error) {
@@ -240,7 +241,7 @@ export const api = {
       if (example) return example
       throw new ApiError(404, `Listing ${id} was not found`)
     }
-    return isInTurnover(id) ? { ...(data as Listing), available: false } : data as Listing
+    return isInTurnover(id) ? { ...(data as Listing), available: false, rooms_available: 0 } : data as Listing
   },
 
   async createListing(input: NewListingInput): Promise<Listing> {
@@ -299,7 +300,7 @@ export const api = {
     if (lErr) throw new ApiError(500, lErr.message)
     if (!listing) throw new ApiError(404, `Listing ${input.listing_id} was not found`)
     const l = listing as Listing
-    if (!l.available) throw new ApiError(400, 'Listing is not currently available')
+    if (!hasRentalSpace(l)) throw new ApiError(400, 'Listing has no rental space available')
     if (input.guests > l.max_guests) throw new ApiError(400, 'Guest count exceeds listing maxGuests')
 
     const nights = Math.max(

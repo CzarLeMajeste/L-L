@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, MapPin, Users, Calendar, Check, ShieldCheck, QrCode, Wallet, MessageCircle } from 'lucide-react'
 import { api, FILIPINO_ALTERNATIVES } from '../lib/api'
-import type { Booking, InstapayPayment, Listing } from '../lib/types'
+import { hasRentalSpace, type Booking, type InstapayPayment, type Listing } from '../lib/types'
 import { QRCode } from '../components/QRCode'
 
 interface Props {
@@ -48,6 +48,7 @@ export function ListingDetailView({ id, onBack, onCommunity }: Props) {
   }, [checkIn, checkOut])
 
   const monthlyRate = listing ? Number(listing.monthly_rate ?? listing.nightly_rate) : 0
+  const unavailable = listing ? !hasRentalSpace(listing) : false
   const totalPrice = listing && nights > 0 ? monthlyRate * Math.max(1, Math.ceil(nights / 30)) : 0
 
   const verifyIdentity = async () => {
@@ -146,8 +147,8 @@ export function ListingDetailView({ id, onBack, onCommunity }: Props) {
               <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {listing.location}</span>
               <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> {listing.rooms_available ?? 1} rooms · {listing.room_capacity ?? listing.max_guests} boarders/room</span>
               <span className="flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${listing.available ? 'bg-brand-500' : 'bg-ink-300'}`} />
-                {listing.available ? 'Available' : 'Unavailable'}
+                <span className={`h-2 w-2 rounded-full ${unavailable ? 'bg-ink-300' : 'bg-brand-500'}`} />
+                {unavailable ? 'Unavailable' : 'Available'}
               </span>
             </div>
             {listing.description && <p className="mt-4 text-sm leading-relaxed text-ink-600">{listing.description}</p>}
@@ -228,9 +229,9 @@ export function ListingDetailView({ id, onBack, onCommunity }: Props) {
 
                   {formError && <p className="text-xs font-medium text-red-600">{formError}</p>}
 
-                  <button onClick={submit} disabled={submitting || !listing.available || !identityVerified} className="btn-primary w-full">
+                  <button onClick={submit} disabled={submitting || unavailable || !identityVerified} className="btn-primary w-full">
                     <Calendar className="h-4 w-4" />
-                    {listing.available ? (submitting ? 'Reserving…' : 'Reserve now') : 'Unavailable'}
+                    {unavailable ? 'Unavailable' : (submitting ? 'Reserving…' : 'Reserve now')}
                   </button>
                   <p className="flex items-center justify-center gap-1 text-[11px] text-ink-400">
                     <ShieldCheck className="h-3 w-3" /> You won’t be charged yet
