@@ -44,8 +44,7 @@ export function ExploreView({ filter, onFilter, onOpenListing }: Props) {
         <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
         <div className="absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-accent-400/20 blur-2xl" />
         <div className="relative">
-          <span className="chip bg-white/15 text-white backdrop-blur-sm">Anonymous boarder community</span>
-          <h1 className="mt-4 max-w-2xl font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">
+          <h1 className="max-w-2xl font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">
             Find a boarding house near the University of Antique
           </h1>
           <p className="mt-3 max-w-xl text-sm text-brand-50/90 sm:text-base">
