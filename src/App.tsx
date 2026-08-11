@@ -74,7 +74,7 @@ export default function App() {
           <>
             {route.name === 'explore' && <ExploreView filter={filter} onFilter={setFilter} onOpenListing={(id) => setRoute({ name: 'listing', id })} />}
             {route.name === 'listing' && <ListingDetailView id={route.id} onBack={() => setRoute({ name: 'explore' })} onCommunity={() => setRoute({ name: 'community', id: route.id })} />}
-            {route.name === 'community' && <CommunityView listing={{ id: route.id, title: 'Boarding house community', property_type: 'LODGING_HOUSE', location: 'University of Antique area', nightly_rate: 0, max_guests: 1, available: true, image_url: null, description: null, created_at: new Date().toISOString() }} profile={boarderProfile} onBack={() => setRoute({ name: 'explore' })} onSignIn={() => setBoarderAccess(true)} />}
+            {route.name === 'community' && <CommunityView key={route.id} listing={{ id: route.id, title: 'Boarding house community', property_type: 'LODGING_HOUSE', location: 'University of Antique area', nightly_rate: 0, max_guests: 1, available: true, image_url: null, description: null, created_at: new Date().toISOString() }} profile={boarderProfile} onBack={() => setRoute({ name: 'explore' })} onSignIn={() => setBoarderAccess(true)} onOpenCommunity={(id) => setRoute({ name: 'community', id })} />}
           </>
         )}
         {role === 'host' && (

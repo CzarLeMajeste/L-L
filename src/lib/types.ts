@@ -21,6 +21,8 @@ export interface Listing {
   partner_status?: 'UNVERIFIED_STUDENT' | 'VERIFIED_PARTNER'
   moderator_enabled?: boolean
   community_events?: string[]
+  community_rating?: number
+  community_reviews?: number
   created_by?: string
   created_at: string
 }
