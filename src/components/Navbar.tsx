@@ -1,4 +1,4 @@
-import { CalendarCheck, Shield, KeyRound, LogOut, Plus, Building2, ChevronDown, Sparkles } from 'lucide-react'
+import { CalendarCheck, Shield, KeyRound, LogOut, Plus, Building2, ChevronDown, MessageCircle, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import type { Route } from '../App'
 import type { Role } from './RoleSelect'
@@ -18,6 +18,7 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal, onBoarde
 
   if (role === 'client') {
     items.push({ key: 'explore', label: 'Boarding houses', icon: Building2, route: { name: 'explore' } })
+    items.push({ key: 'community', label: 'Community', icon: MessageCircle, route: { name: 'community', id: 'demo-sibalom-campus-house' } })
   } else if (role === 'host') {
     items.push({ key: 'hostListings', label: 'My Listings', icon: Building2, route: { name: 'hostListings' } })
     items.push({ key: 'hostNew', label: 'Add Listing', icon: Plus, route: { name: 'hostNew' } })
