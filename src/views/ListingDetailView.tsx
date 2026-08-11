@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, MapPin, Users, Calendar, Check, ShieldCheck, QrCode, Wallet, MessageCircle } from 'lucide-react'
+import { ArrowLeft, MapPin, Users, Calendar, Check, ShieldCheck, QrCode, Wallet, MessageCircle, Navigation, LocateFixed, ExternalLink } from 'lucide-react'
 import { api, FILIPINO_ALTERNATIVES } from '../lib/api'
 import { hasRentalSpace, type Booking, type InstapayPayment, type Listing } from '../lib/types'
 import { QRCode } from '../components/QRCode'
@@ -8,6 +8,22 @@ interface Props {
   id: string
   onBack: () => void
   onCommunity: () => void
+}
+
+interface UserLocation {
+  latitude: number
+  longitude: number
+  accuracy: number
+}
+
+function distanceInKilometers(from: UserLocation, latitude: number, longitude: number): number {
+  const toRadians = (value: number) => value * Math.PI / 180
+  const earthRadius = 6371
+  const latitudeDelta = toRadians(latitude - from.latitude)
+  const longitudeDelta = toRadians(longitude - from.longitude)
+  const a = Math.sin(latitudeDelta / 2) ** 2
+    + Math.cos(toRadians(from.latitude)) * Math.cos(toRadians(latitude)) * Math.sin(longitudeDelta / 2) ** 2
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 export function ListingDetailView({ id, onBack, onCommunity }: Props) {
@@ -28,6 +44,8 @@ export function ListingDetailView({ id, onBack, onCommunity }: Props) {
   const [payment, setPayment] = useState<InstapayPayment | null>(null)
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
+  const [locationError, setLocationError] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -50,6 +68,27 @@ export function ListingDetailView({ id, onBack, onCommunity }: Props) {
   const monthlyRate = listing ? Number(listing.monthly_rate ?? listing.nightly_rate) : 0
   const unavailable = listing ? !hasRentalSpace(listing) : false
   const totalPrice = listing && nights > 0 ? monthlyRate * Math.max(1, Math.ceil(nights / 30)) : 0
+  const mapQuery = listing?.latitude && listing.longitude ? `${listing.latitude},${listing.longitude}` : listing?.location ?? ''
+  const mapUrl = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`
+  const directionsOrigin = userLocation ? `${userLocation.latitude},${userLocation.longitude}` : 'My Location'
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(directionsOrigin)}&destination=${encodeURIComponent(mapQuery)}&travelmode=walking`
+  const distance = listing?.latitude && listing.longitude && userLocation
+    ? distanceInKilometers(userLocation, listing.latitude, listing.longitude)
+    : null
+
+  const trackDirections = () => {
+    setLocationError(null)
+    if (!navigator.geolocation) {
+      setLocationError('Live location is not supported by this browser.')
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => setUserLocation({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy }),
+      () => setLocationError('Location access was not granted. You can still open directions in Google Maps.'),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    )
+  }
 
   const verifyIdentity = async () => {
     setFormError(null)
@@ -163,6 +202,36 @@ export function ListingDetailView({ id, onBack, onCommunity }: Props) {
             <div className="mt-5 rounded-2xl bg-accent-50 p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-accent-700">Why boarders choose this area</p>
               <p className="mt-1 text-sm leading-relaxed text-accent-800">{(listing.nearby_attractions ?? ['University of Antique campus', 'Campus transport routes', 'Affordable food nearby']).join(' · ')}</p>
+            </div>
+            <div className="mt-5 overflow-hidden rounded-2xl bg-ink-50 ring-1 ring-ink-100">
+              <iframe
+                title={`Map for ${listing.title}`}
+                src={mapUrl}
+                className="h-56 w-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <div className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  <a href={mapsUrl} target="_blank" rel="noreferrer" className="btn-secondary px-3 py-2 text-xs">
+                    <ExternalLink className="h-3.5 w-3.5" /> Open in Google Maps
+                  </a>
+                  <a href={directionsUrl} target="_blank" rel="noreferrer" className="btn-primary px-3 py-2 text-xs">
+                    <Navigation className="h-3.5 w-3.5" /> Get directions
+                  </a>
+                  <button onClick={trackDirections} className="btn-secondary px-3 py-2 text-xs">
+                    <LocateFixed className="h-3.5 w-3.5" /> Track my route
+                  </button>
+                </div>
+                {userLocation && (
+                  <p className="mt-3 text-xs font-semibold text-brand-700">
+                    Live location ready · accuracy ±{Math.round(userLocation.accuracy)} m
+                    {distance !== null ? ` · about ${distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away` : ''}
+                  </p>
+                )}
+                {locationError && <p className="mt-3 text-xs font-medium text-red-600">{locationError}</p>}
+                <p className="mt-2 text-[11px] text-ink-400">Directions open in Google Maps. Live tracking stays on this device and is not shared with the host.</p>
+              </div>
             </div>
             <button onClick={onCommunity} className="btn-secondary mt-5"><MessageCircle className="h-4 w-4" /> Join this house community</button>
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">

@@ -5,6 +5,8 @@ export interface Listing {
   title: string
   property_type: PropertyType
   location: string
+  latitude?: number
+  longitude?: number
   nightly_rate: number
   monthly_rate?: number
   max_guests: number

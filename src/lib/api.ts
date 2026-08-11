@@ -173,6 +173,8 @@ const displayExamples = EXAMPLE_LISTINGS.map((listing, index) => ({
   partner_status: index < 2 ? 'VERIFIED_PARTNER' as const : 'UNVERIFIED_STUDENT' as const,
   moderator_enabled: index < 2,
   community_events: index < 2 ? ['Boarder orientation'] : [],
+  latitude: 10.789 + index * 0.001,
+  longitude: 122.017 + index * 0.001,
   rooms_available: index % 3 + 1,
   room_capacity: listing.max_guests,
   rental_mode: index % 3 === 0 ? 'BOTH' as const : 'MONTHLY' as const,
