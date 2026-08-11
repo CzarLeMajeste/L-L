@@ -8,7 +8,7 @@ interface Props {
 }
 
 export function ListingCard({ listing, onOpen, index = 0 }: Props) {
-  const typeLabel = listing.property_type === 'LODGING_HOUSE' ? 'Lodging House' : 'Private Condo'
+  const typeLabel = listing.property_type === 'LODGING_HOUSE' ? 'Boarding House' : 'Private Room'
   return (
     <button
       onClick={() => onOpen(listing.id)}
@@ -57,7 +57,7 @@ export function ListingCard({ listing, onOpen, index = 0 }: Props) {
         </div>
         <div className="mt-2 flex items-center gap-1 text-xs text-ink-500">
           <Users className="h-3.5 w-3.5" />
-          Up to {listing.max_guests} guests
+          Up to {listing.max_guests} boarders
         </div>
         <div className="mt-3 flex items-end justify-between">
           <div>
@@ -67,7 +67,7 @@ export function ListingCard({ listing, onOpen, index = 0 }: Props) {
             <span className="text-xs text-ink-400"> / night</span>
           </div>
           <span className="text-xs font-semibold text-brand-600 opacity-0 transition-opacity group-hover:opacity-100">
-            View details →
+            View house →
           </span>
         </div>
       </div>

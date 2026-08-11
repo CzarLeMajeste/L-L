@@ -41,18 +41,18 @@ export function RoleSelect({ onSelect }: Props) {
           <Home className="h-5 w-5" />
         </span>
         <span className="font-display text-lg font-extrabold tracking-tight text-ink-900">
-          Lodge<span className="text-brand-600">Link</span>
+          Boarder<span className="text-brand-600">Link</span>
         </span>
       </div>
 
       <div className="flex flex-1 items-center justify-center px-4 py-10">
         <div className="w-full max-w-4xl">
           <div className="mb-10 text-center">
-            <span className="chip bg-brand-50 text-brand-700">Love at the Lodge</span>
+            <span className="chip bg-brand-50 text-brand-700">Anonymous boarder community</span>
             <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
-              Who are you today?
+              Find your place near campus
             </h1>
-            <p className="mt-2 text-sm text-ink-500">Choose your role to enter the right experience.</p>
+            <p className="mt-2 text-sm text-ink-500">Browse boarding houses around the University of Antique without creating an account.</p>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-3">

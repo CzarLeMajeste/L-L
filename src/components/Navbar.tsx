@@ -35,7 +35,7 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal }: Props)
               <Sparkles className="h-5 w-5" />
             </span>
             <span className="font-display text-lg font-extrabold tracking-tight text-ink-900">
-              Lodge<span className="text-brand-600">Link</span>
+              Boarder<span className="text-brand-600">Link</span>
             </span>
           </button>
         </div>
