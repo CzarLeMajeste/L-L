@@ -13,7 +13,6 @@ export function HostView({ onDone }: Props) {
   const [location, setLocation] = useState('')
   const [rate, setRate] = useState('')
   const [maxGuests, setMaxGuests] = useState(2)
-  const [available, setAvailable] = useState(true)
   const [imageUrl, setImageUrl] = useState('')
   const [description, setDescription] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -35,7 +34,7 @@ export function HostView({ onDone }: Props) {
         location,
         nightly_rate: r,
         max_guests: maxGuests,
-        available,
+        available: true,
         image_url: imageUrl.trim() || undefined,
         description: description.trim() || undefined,
       })
@@ -103,10 +102,6 @@ export function HostView({ onDone }: Props) {
             <label className="label">Description (optional)</label>
             <textarea className="input min-h-[88px] resize-none" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Tell guests what makes this place special…" />
           </div>
-          <label className="flex items-center gap-2 text-sm font-medium text-ink-700 sm:col-span-2">
-            <input type="checkbox" checked={available} onChange={(e) => setAvailable(e.target.checked)} className="h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-brand-500" />
-            Available for booking
-          </label>
         </div>
 
         {error && <p className="mt-4 text-xs font-medium text-red-600">{error}</p>}

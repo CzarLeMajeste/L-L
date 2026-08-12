@@ -5,12 +5,30 @@ export interface Listing {
   title: string
   property_type: PropertyType
   location: string
+  latitude?: number
+  longitude?: number
   nightly_rate: number
+  monthly_rate?: number
   max_guests: number
   available: boolean
   image_url: string | null
   description: string | null
+  included_amenities?: string[]
+  nearby_attractions?: string[]
+  rooms_available?: number
+  room_capacity?: number
+  rental_mode?: 'MONTHLY' | 'TRANSIENT' | 'BOTH'
+  partner_status?: 'UNVERIFIED_STUDENT' | 'VERIFIED_PARTNER'
+  moderator_enabled?: boolean
+  community_events?: string[]
+  community_rating?: number
+  community_reviews?: number
+  created_by?: string
   created_at: string
+}
+
+export function hasRentalSpace(listing: Pick<Listing, 'rooms_available' | 'room_capacity' | 'max_guests'>): boolean {
+  return (listing.rooms_available ?? 1) > 0 && (listing.room_capacity ?? listing.max_guests) > 0
 }
 
 export interface NewListingInput {
@@ -22,6 +40,9 @@ export interface NewListingInput {
   available: boolean
   image_url?: string
   description?: string
+  rooms_available?: number
+  room_capacity?: number
+  rental_mode?: 'MONTHLY' | 'TRANSIENT' | 'BOTH'
 }
 
 export interface Booking {
@@ -38,6 +59,7 @@ export interface Booking {
 
 export interface NewBookingInput {
   listing_id: string
+  client_id: string
   guest_name: string
   check_in: string
   check_out: string

@@ -1,12 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL as string
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-if (!url || !anonKey) {
-  throw new Error('Missing Supabase env vars. Check .env for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
-}
+export const isSupabaseConfigured = Boolean(
+  url && anonKey && !url.includes('PLACEHOLDER') && url.startsWith('https://'),
+)
 
-export const supabase = createClient(url, anonKey, {
-  auth: { persistSession: false },
-})
+export const supabase = createClient(
+  isSupabaseConfigured && url ? url : 'https://placeholder.supabase.co',
+  isSupabaseConfigured && anonKey ? anonKey : 'placeholder-anon-key',
+  { auth: { persistSession: false } },
+)

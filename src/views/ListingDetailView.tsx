@@ -1,21 +1,39 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, MapPin, Users, Calendar, Check, ShieldCheck, QrCode, Wallet } from 'lucide-react'
+import { ArrowLeft, MapPin, Users, Calendar, Check, ShieldCheck, QrCode, Wallet, MessageCircle, Navigation, LocateFixed, ExternalLink } from 'lucide-react'
 import { api, FILIPINO_ALTERNATIVES } from '../lib/api'
-import type { Booking, InstapayPayment, Listing } from '../lib/types'
+import { hasRentalSpace, type Booking, type InstapayPayment, type Listing } from '../lib/types'
 import { QRCode } from '../components/QRCode'
 
 interface Props {
   id: string
   onBack: () => void
-  onBooked: () => void
+  onCommunity: () => void
 }
 
-export function ListingDetailView({ id, onBack, onBooked }: Props) {
+interface UserLocation {
+  latitude: number
+  longitude: number
+  accuracy: number
+}
+
+function distanceInKilometers(from: UserLocation, latitude: number, longitude: number): number {
+  const toRadians = (value: number) => value * Math.PI / 180
+  const earthRadius = 6371
+  const latitudeDelta = toRadians(latitude - from.latitude)
+  const longitudeDelta = toRadians(longitude - from.longitude)
+  const a = Math.sin(latitudeDelta / 2) ** 2
+    + Math.cos(toRadians(from.latitude)) * Math.cos(toRadians(latitude)) * Math.sin(longitudeDelta / 2) ** 2
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+export function ListingDetailView({ id, onBack, onCommunity }: Props) {
   const [listing, setListing] = useState<Listing | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [clientId, setClientId] = useState('guest-001')
-  const [guestName, setGuestName] = useState('')
+  const [guestName, setGuestName] = useState('Test Guest 001')
+  const [identityVerified, setIdentityVerified] = useState(false)
+  const [verifyingIdentity, setVerifyingIdentity] = useState(false)
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
   const [guests, setGuests] = useState(1)
@@ -26,6 +44,8 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
   const [payment, setPayment] = useState<InstapayPayment | null>(null)
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
+  const [locationError, setLocationError] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -45,17 +65,58 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
     return Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86_400_000)
   }, [checkIn, checkOut])
 
-  const totalPrice = listing && nights > 0 ? Number(listing.nightly_rate) * nights : 0
+  const monthlyRate = listing ? Number(listing.monthly_rate ?? listing.nightly_rate) : 0
+  const unavailable = listing ? !hasRentalSpace(listing) : false
+  const totalPrice = listing && nights > 0 ? monthlyRate * Math.max(1, Math.ceil(nights / 30)) : 0
+  const mapQuery = listing?.latitude && listing.longitude ? `${listing.latitude},${listing.longitude}` : listing?.location ?? ''
+  const mapUrl = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`
+  const directionsOrigin = userLocation ? `${userLocation.latitude},${userLocation.longitude}` : 'My Location'
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(directionsOrigin)}&destination=${encodeURIComponent(mapQuery)}&travelmode=walking`
+  const distance = listing?.latitude && listing.longitude && userLocation
+    ? distanceInKilometers(userLocation, listing.latitude, listing.longitude)
+    : null
+
+  const trackDirections = () => {
+    setLocationError(null)
+    if (!navigator.geolocation) {
+      setLocationError('Live location is not supported by this browser.')
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => setUserLocation({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy }),
+      () => setLocationError('Location access was not granted. You can still open directions in Google Maps.'),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    )
+  }
+
+  const verifyIdentity = async () => {
+    setFormError(null)
+    if (!clientId.trim()) return setFormError('Please enter your client ID.')
+    if (!guestName.trim()) return setFormError('Please enter the guest name before verifying.')
+    setVerifyingIdentity(true)
+    try {
+      await api.assertVerifiedClient(clientId.trim())
+      setIdentityVerified(true)
+    } catch (e: any) {
+      setFormError(e.message)
+    } finally {
+      setVerifyingIdentity(false)
+    }
+  }
 
   const submit = async () => {
     setFormError(null)
+    if (!identityVerified) return setFormError('Verify your client ID and name before choosing dates.')
     if (!guestName.trim()) return setFormError('Please enter the guest name.')
     if (!checkIn || !checkOut) return setFormError('Please choose check-in and check-out dates.')
     if (nights < 1) return setFormError('Check-out must be after check-in.')
     if (listing && guests > listing.max_guests) return setFormError(`This stay allows up to ${listing.max_guests} guests.`)
+    if (!clientId.trim()) return setFormError('Please enter your client ID.')
     setSubmitting(true)
     try {
-      const b = await api.createBooking({ listing_id: id, guest_name: guestName, check_in: checkIn, check_out: checkOut, guests })
+      await api.assertVerifiedClient(clientId.trim())
+      const b = await api.createBooking({ client_id: clientId.trim(), listing_id: id, guest_name: guestName, check_in: checkIn, check_out: checkOut, guests })
       setBooking(b)
     } catch (e: any) {
       setFormError(e.message)
@@ -123,15 +184,58 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">{listing.title}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-ink-500">
               <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {listing.location}</span>
-              <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> Up to {listing.max_guests} guests</span>
+              <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> {listing.rooms_available ?? 1} rooms · {listing.room_capacity ?? listing.max_guests} boarders/room</span>
               <span className="flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${listing.available ? 'bg-brand-500' : 'bg-ink-300'}`} />
-                {listing.available ? 'Available' : 'Unavailable'}
+                <span className={`h-2 w-2 rounded-full ${unavailable ? 'bg-ink-300' : 'bg-brand-500'}`} />
+                {unavailable ? 'Unavailable' : 'Available'}
               </span>
             </div>
             {listing.description && <p className="mt-4 text-sm leading-relaxed text-ink-600">{listing.description}</p>}
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              {(listing.included_amenities ?? ['Wi-Fi included', 'Water included', 'Study-friendly common area', 'Shared kitchen']).map((amenity) => <span key={amenity} className="rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700">{amenity}</span>)}
+            </div>
+            <div className="mt-5 rounded-2xl bg-ink-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Rental options</p>
+              <p className="mt-1 text-sm font-semibold text-ink-800">{listing.rental_mode === 'TRANSIENT' ? 'Transient stays' : listing.rental_mode === 'BOTH' ? 'Monthly and transient stays' : 'Monthly boarder rental'}</p>
+              <p className="mt-1 text-xs text-ink-500">{listing.rooms_available ?? 1} room{(listing.rooms_available ?? 1) === 1 ? '' : 's'} currently available · {listing.room_capacity ?? listing.max_guests} boarders per room.</p>
+            </div>
+            <div className="mt-5 rounded-2xl bg-accent-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-accent-700">Why boarders choose this area</p>
+              <p className="mt-1 text-sm leading-relaxed text-accent-800">{(listing.nearby_attractions ?? ['University of Antique campus', 'Campus transport routes', 'Affordable food nearby']).join(' · ')}</p>
+            </div>
+            <div className="mt-5 overflow-hidden rounded-2xl bg-ink-50 ring-1 ring-ink-100">
+              <iframe
+                title={`Map for ${listing.title}`}
+                src={mapUrl}
+                className="h-56 w-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <div className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  <a href={mapsUrl} target="_blank" rel="noreferrer" className="btn-secondary px-3 py-2 text-xs">
+                    <ExternalLink className="h-3.5 w-3.5" /> Open in Google Maps
+                  </a>
+                  <a href={directionsUrl} target="_blank" rel="noreferrer" className="btn-primary px-3 py-2 text-xs">
+                    <Navigation className="h-3.5 w-3.5" /> Get directions
+                  </a>
+                  <button onClick={trackDirections} className="btn-secondary px-3 py-2 text-xs">
+                    <LocateFixed className="h-3.5 w-3.5" /> Track my route
+                  </button>
+                </div>
+                {userLocation && (
+                  <p className="mt-3 text-xs font-semibold text-brand-700">
+                    Live location ready · accuracy ±{Math.round(userLocation.accuracy)} m
+                    {distance !== null ? ` · about ${distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away` : ''}
+                  </p>
+                )}
+                {locationError && <p className="mt-3 text-xs font-medium text-red-600">{locationError}</p>}
+                <p className="mt-2 text-[11px] text-ink-400">Directions open in Google Maps. Live tracking stays on this device and is not shared with the host.</p>
+              </div>
+            </div>
+            <button onClick={onCommunity} className="btn-secondary mt-5"><MessageCircle className="h-4 w-4" /> Join this house community</button>
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {['Free Wi-Fi', 'Self check-in', 'Kitchen', 'Hot shower', 'Parking', 'Pet-friendly'].map((a) => (
+              {['Quiet hours', 'Visitor rules', 'Laundry area', 'Drinking water', 'Study desk', 'Secure entry'].map((a) => (
                 <div key={a} className="flex items-center gap-2 rounded-xl bg-ink-50 px-3 py-2 text-xs font-medium text-ink-600">
                   <Check className="h-3.5 w-3.5 text-brand-600" /> {a}
                 </div>
@@ -143,30 +247,42 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
             <div className="card p-5 ring-1 ring-ink-200">
               <div className="flex items-baseline justify-between">
                 <span className="font-display text-2xl font-extrabold text-ink-900">
-                  ₱{Number(listing.nightly_rate).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                  ₱{monthlyRate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                 </span>
-                <span className="text-xs text-ink-400">per night</span>
+                <span className="text-xs text-ink-400">{listing.rental_mode === 'TRANSIENT' ? 'per night' : listing.rental_mode === 'BOTH' ? 'monthly · transient available' : 'per month'}</span>
               </div>
 
               {!booking ? (
                 <div className="mt-4 space-y-3">
                   <div>
-                    <label className="label">Guest name</label>
-                    <input className="input" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Juan Dela Cruz" />
+                    <label className="label">Verified client ID</label>
+                    <input className="input" value={clientId} onChange={(e) => { setClientId(e.target.value); setIdentityVerified(false) }} placeholder="guest-001" disabled={identityVerified} />
+                    <p className="mt-1 text-[11px] text-ink-400">No account needed. Use the ID approved by LodgeLink verification. Preview test ID: guest-001.</p>
                   </div>
+                  <div>
+                    <label className="label">Guest name</label>
+                    <input className="input" value={guestName} onChange={(e) => { setGuestName(e.target.value); setIdentityVerified(false) }} placeholder="Test Guest 001" disabled={identityVerified} />
+                  </div>
+                  {!identityVerified && (
+                    <button onClick={verifyIdentity} disabled={verifyingIdentity} className="btn-secondary w-full">
+                      <ShieldCheck className="h-4 w-4" />
+                      {verifyingIdentity ? 'Verifying identity…' : 'Verify ID and name'}
+                    </button>
+                  )}
+                  {identityVerified && <p className="rounded-xl bg-brand-50 px-3 py-2.5 text-xs font-semibold text-brand-700">Identity verified. You can now select your stay dates.</p>}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="label">Check-in</label>
-                      <input type="date" className="input" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} min={new Date().toISOString().slice(0, 10)} />
+                      <input type="date" className="input" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} min={new Date().toISOString().slice(0, 10)} disabled={!identityVerified} />
                     </div>
                     <div>
                       <label className="label">Check-out</label>
-                      <input type="date" className="input" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} min={checkIn || new Date().toISOString().slice(0, 10)} />
+                      <input type="date" className="input" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} min={checkIn || new Date().toISOString().slice(0, 10)} disabled={!identityVerified} />
                     </div>
                   </div>
                   <div>
                     <label className="label">Guests</label>
-                    <select className="input" value={guests} onChange={(e) => setGuests(Number(e.target.value))}>
+                    <select className="input" value={guests} onChange={(e) => setGuests(Number(e.target.value))} disabled={!identityVerified}>
                       {Array.from({ length: listing.max_guests }).map((_, i) => (
                         <option key={i} value={i + 1}>{i + 1} {i === 0 ? 'guest' : 'guests'}</option>
                       ))}
@@ -175,16 +291,16 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
 
                   {nights > 0 && (
                     <div className="flex items-center justify-between rounded-xl bg-ink-50 px-3.5 py-2.5 text-sm">
-                      <span className="text-ink-500">₱{Number(listing.nightly_rate).toFixed(2)} × {nights} {nights === 1 ? 'night' : 'nights'}</span>
+                      <span className="text-ink-500">₱{monthlyRate.toFixed(2)} monthly board · {Math.max(1, Math.ceil(nights / 30))} {Math.max(1, Math.ceil(nights / 30)) === 1 ? 'month' : 'months'}</span>
                       <span className="font-display font-bold text-ink-900">₱{totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
 
                   {formError && <p className="text-xs font-medium text-red-600">{formError}</p>}
 
-                  <button onClick={submit} disabled={submitting || !listing.available} className="btn-primary w-full">
+                  <button onClick={submit} disabled={submitting || unavailable || !identityVerified} className="btn-primary w-full">
                     <Calendar className="h-4 w-4" />
-                    {listing.available ? (submitting ? 'Reserving…' : 'Reserve now') : 'Unavailable'}
+                    {unavailable ? 'Unavailable' : (submitting ? 'Reserving…' : 'Reserve now')}
                   </button>
                   <p className="flex items-center justify-center gap-1 text-[11px] text-ink-400">
                     <ShieldCheck className="h-3 w-3" /> You won’t be charged yet
@@ -193,13 +309,11 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
               ) : (
                 <BookingConfirmation
                   booking={booking}
-                  clientId={clientId}
-                  setClientId={setClientId}
                   payment={payment}
                   paying={paying}
                   payError={payError}
                   onPay={pay}
-                  onBooked={onBooked}
+                  onBack={onBack}
                 />
               )}
             </div>
@@ -212,22 +326,18 @@ export function ListingDetailView({ id, onBack, onBooked }: Props) {
 
 function BookingConfirmation({
   booking,
-  clientId,
-  setClientId,
   payment,
   paying,
   payError,
   onPay,
-  onBooked,
+  onBack,
 }: {
   booking: Booking
-  clientId: string
-  setClientId: (s: string) => void
   payment: InstapayPayment | null
   paying: boolean
   payError: string | null
   onPay: () => void
-  onBooked: () => void
+  onBack: () => void
 }) {
   return (
     <div className="mt-4 space-y-4">
@@ -237,18 +347,14 @@ function BookingConfirmation({
 
       {!payment ? (
         <>
-          <div>
-            <label className="label">Client ID (for verification)</label>
-            <input className="input" value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="guest-001" />
-          </div>
           <p className="text-xs text-ink-500">
-            To generate an InstaPay QR, your client ID must be verified by an admin first. Visit the Admin tab to verify a client.
+            Your verified client ID was checked before this booking was created. Use the same ID to generate your InstaPay QR.
           </p>
           {payError && <p className="text-xs font-medium text-red-600">{payError}</p>}
           <button onClick={onPay} disabled={paying} className="btn-primary w-full">
             <QrCode className="h-4 w-4" /> {paying ? 'Generating…' : 'Generate InstaPay QR'}
           </button>
-          <button onClick={onBooked} className="btn-secondary w-full">View my bookings</button>
+          <p className="rounded-xl bg-accent-50 px-3 py-2.5 text-xs leading-relaxed text-accent-700">Your host will send check-in instructions and arrival details using the contact information provided during verification.</p>
         </>
       ) : (
         <div className="animate-scale-in space-y-4">
@@ -273,7 +379,8 @@ function BookingConfirmation({
               ))}
             </div>
           </div>
-          <button onClick={onBooked} className="btn-primary w-full">Done — view bookings</button>
+          <p className="rounded-xl bg-brand-50 px-3 py-2.5 text-xs leading-relaxed text-brand-700">Receipt saved. Your stay is blocked through checkout plus a two-hour cleaning window so the host can prepare the room for the next guest.</p>
+          <button onClick={onBack} className="btn-primary w-full">Return to stays</button>
         </div>
       )}
     </div>

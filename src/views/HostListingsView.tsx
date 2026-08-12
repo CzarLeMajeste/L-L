@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Building2, MapPin, Users, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Building2, MapPin, Users, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
+import { hasRentalSpace } from '../lib/types'
 import type { Listing } from '../lib/types'
 
 export function HostListingsView() {
@@ -19,11 +20,6 @@ export function HostListingsView() {
   useEffect(() => {
     refresh()
   }, [])
-
-  const toggleAvailable = async (l: Listing) => {
-    await api.updateListingAvailability(l.id, !l.available)
-    refresh()
-  }
 
   const remove = async (l: Listing) => {
     await api.deleteListing(l.id)
@@ -87,15 +83,10 @@ export function HostListingsView() {
                     </span>
                   </div>
                 </div>
-                <div className="flex shrink-0 gap-2">
-                  <button
-                    onClick={() => toggleAvailable(l)}
-                    className={`btn-secondary px-3 py-2 text-xs ${l.available ? 'text-brand-700' : 'text-ink-500'}`}
-                    title={l.available ? 'Set unavailable' : 'Set available'}
-                  >
-                    {l.available ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    {l.available ? 'Live' : 'Hidden'}
-                  </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className={`chip ${hasRentalSpace(l) ? 'bg-brand-50 text-brand-700' : 'bg-ink-100 text-ink-500'}`}>
+                    {hasRentalSpace(l) ? 'Space available' : 'Unavailable'}
+                  </span>
                   <button onClick={() => remove(l)} className="btn-secondary px-3 py-2 text-xs text-red-600 hover:bg-red-50" title="Delete listing">
                     <Trash2 className="h-4 w-4" />
                   </button>
