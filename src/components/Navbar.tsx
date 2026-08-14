@@ -33,7 +33,7 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal, onBoarde
     <header className="sticky top-0 z-40 border-b border-ink-100 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <button onClick={() => onNavigate(items[0].route)} className="flex items-center gap-2.5 transition-transform hover:scale-[1.02]">
+          <button onClick={() => onNavigate(items[0].route)} className="flex items-center gap-2.5 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[.98]">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 via-brand-600 to-accent-500 text-white shadow-soft">
               <Sparkles className="h-5 w-5" />
             </span>
@@ -50,7 +50,7 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal, onBoarde
               <button
                 key={key}
                 onClick={() => onNavigate(r)}
-                className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all ${
+                className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-[background-color,color,transform] duration-200 ease-out active:scale-[.97] ${
                   active ? 'bg-brand-50 text-brand-700' : 'text-ink-500 hover:bg-ink-100 hover:text-ink-800'
                 }`}
               >
@@ -61,12 +61,12 @@ export function Navbar({ route, role, onNavigate, onExit, onOpenPortal, onBoarde
           })}
           {role === 'client' ? (
             <div className="relative ml-2 flex shrink-0 items-center gap-1 border-l border-ink-200 pl-3">
-              <button onClick={() => setPortalOpen((open) => !open)} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-ink-900 px-3.5 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-800" aria-expanded={portalOpen}>
+              <button onClick={() => setPortalOpen((open) => !open)} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-ink-900 px-3.5 py-2 text-sm font-semibold text-white transition-[background-color,transform] duration-200 ease-out hover:bg-ink-800 active:scale-[.97]" aria-expanded={portalOpen}>
                 Partner portal
                 <ChevronDown className={`h-4 w-4 transition-transform ${portalOpen ? 'rotate-180' : ''}`} />
               </button>
               {portalOpen && <PortalMenu onOpenPortal={onOpenPortal} onClose={() => setPortalOpen(false)} />}
-              <button onClick={onBoarderAccess} className="shrink-0 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold text-brand-700 transition-all hover:bg-brand-50">Boarder sign in</button>
+              <button onClick={onBoarderAccess} className="shrink-0 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold text-brand-700 transition-[background-color,transform] duration-200 ease-out hover:bg-brand-50 active:scale-[.97]">Boarder sign in</button>
             </div>
           ) : (
             <button onClick={onExit} className="ml-2 flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-400 transition-all hover:bg-red-50 hover:text-red-600">
@@ -119,7 +119,7 @@ function PortalMenu({
   onClose: () => void
 }) {
   return (
-    <div className="absolute right-0 top-11 z-50 w-64 rounded-2xl bg-white p-2 shadow-lift ring-1 ring-ink-100">
+    <div className="absolute right-0 top-11 z-50 w-64 origin-top-right animate-scale-in rounded-2xl bg-white p-2 shadow-lift ring-1 ring-ink-100">
       <p className="px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-ink-400">Sign in to a portal</p>
       <button onClick={() => { onClose(); onOpenPortal('host') }} className="w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-accent-50">
         <span className="block text-sm font-semibold text-ink-800">Host portal</span>

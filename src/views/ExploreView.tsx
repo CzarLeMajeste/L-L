@@ -77,7 +77,7 @@ export function ExploreView({ filter, onFilter, onOpenListing }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-ink-400">{listings ? `${filtered.length} ${filtered.length === 1 ? 'house' : 'houses'}` : 'Loading…'}</span>
-          <button onClick={() => setShowCreate((open) => !open)} className="btn-secondary px-3 py-2 text-xs"><Plus className="h-3.5 w-3.5" /> Add a house</button>
+          <button onClick={() => setShowCreate((open) => !open)} className="btn-secondary px-3 py-2 text-xs" aria-expanded={showCreate}><Plus className="h-3.5 w-3.5" /> Add a house</button>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ function FilterPill({
   return (
     <button
       onClick={onClick}
-      className={`chip transition-all ${
+      className={`chip transition-[background-color,color,box-shadow,transform] duration-200 ease-out active:scale-[.97] ${
         active ? 'bg-ink-900 text-white' : 'bg-white text-ink-600 ring-1 ring-ink-200 hover:bg-ink-50'
       }`}
     >

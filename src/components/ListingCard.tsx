@@ -15,7 +15,7 @@ export function ListingCard({ listing, onOpen, index = 0 }: Props) {
     <button
       onClick={() => onOpen(listing.id)}
       style={{ animationDelay: `${Math.min(index * 60, 360)}ms` }}
-      className="group card animate-fade-up overflow-hidden text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lift"
+      className="group card animate-fade-up overflow-hidden text-left transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-lift active:scale-[.98]"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         {listing.image_url ? (
@@ -23,7 +23,7 @@ export function ListingCard({ listing, onOpen, index = 0 }: Props) {
             src={listing.image_url}
             alt={listing.title}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-ink-100 text-ink-400">No image</div>
