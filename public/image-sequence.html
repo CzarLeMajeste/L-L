@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BoarderLink — Scroll sequence</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #14161f;
+      --brand: #18ae82;
+      --accent: #fb923c;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--ink); }
+    body { color: #fff; font: 500 16px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
+    .sequence { min-height: 100vh; }
+    .sequence__intro,
+    .sequence__outro {
+      display: grid;
+      min-height: 55vh;
+      place-items: center;
+      padding: 4rem 1.5rem;
+      text-align: center;
+    }
+    .sequence__intro { background: linear-gradient(145deg, #0a4839, #0a7056 55%, #14161f); }
+    .sequence__outro { background: #f6f7f9; color: #1f2230; }
+    .sequence__copy { max-width: 44rem; }
+    h1 { margin: 0; font-size: clamp(2.25rem, 7vw, 5.5rem); letter-spacing: -.06em; line-height: .98; }
+    p { margin: 1.25rem auto 0; max-width: 34rem; color: rgba(255,255,255,.75); }
+    .sequence__outro p { color: #646f8a; }
+    .sequence__stage {
+      position: relative;
+      height: 100vh;
+      min-height: 28rem;
+      overflow: hidden;
+      background: #000;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+    .sequence__status {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+      background: radial-gradient(circle at center, rgba(20,22,31,.25), rgba(20,22,31,.92));
+      text-align: center;
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+    .sequence__status[hidden] { opacity: 0; visibility: hidden; pointer-events: none; }
+    .sequence__status-inner { max-width: 22rem; }
+    .sequence__label { color: var(--brand); font-size: .75rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .sequence__progress { margin: 1rem auto .75rem; width: min(18rem, 80vw); height: .35rem; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.16); }
+    .sequence__progress-bar { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--brand), var(--accent)); transition: width .2s ease-out; }
+    .sequence__error { color: #ffb4a8; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="sequence">
+    <section class="sequence__intro">
+      <div class="sequence__copy">
+        <h1>Find your next place to call home.</h1>
+        <p>Scroll to explore the space frame by frame.</p>
+      </div>
+    </section>
+
+    <section class="sequence__stage" aria-label="Scroll-linked image sequence">
+      <canvas id="sequence-canvas"></canvas>
+      <div class="sequence__status" id="sequence-status" role="status" aria-live="polite">
+        <div class="sequence__status-inner">
+          <div class="sequence__label" id="status-label">Loading sequence</div>
+          <div class="sequence__progress" aria-hidden="true"><div class="sequence__progress-bar" id="progress-bar"></div></div>
+          <div id="status-message">Preparing your preview…</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sequence__outro">
+      <div class="sequence__copy">
+        <h2>Ready when you are.</h2>
+        <p>The sequence is complete. Continue building your story below.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script>
+    (() => {
+      const frameCount = 240;
+      const framePath = './assets/EZGIF/ezgif-frame-';
+      const canvas = document.getElementById('sequence-canvas');
+      const context = canvas.getContext('2d', { alpha: false });
+      const status = document.getElementById('sequence-status');
+      const statusLabel = document.getElementById('status-label');
+      const statusMessage = document.getElementById('status-message');
+      const progressBar = document.getElementById('progress-bar');
+      const images = [];
+      const sequence = { frame: 0 };
+      let currentImage;
+
+      const frameUrl = (index) => `${framePath}${String(index + 1).padStart(3, '0')}.jpg`;
+
+      function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const bounds = canvas.getBoundingClientRect();
+        canvas.width = Math.round(bounds.width * ratio);
+        canvas.height = Math.round(bounds.height * ratio);
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+        if (currentImage) drawFrame(currentImage);
+      }
+
+      function drawFrame(image) {
+        currentImage = image;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const imageRatio = image.naturalWidth / image.naturalHeight;
+        const canvasRatio = width / height;
+        let drawWidth = width;
+        let drawHeight = height;
+
+        if (imageRatio > canvasRatio) drawHeight = width / imageRatio;
+        else drawWidth = height * imageRatio;
+
+        context.fillStyle = '#000';
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+      }
+
+      function preloadFrames() {
+        return Promise.all(images.map((image, index) => new Promise((resolve, reject) => {
+          image.onload = () => {
+            progressBar.style.width = `${((index + 1) / frameCount) * 100}%`;
+            resolve(image);
+          };
+          image.onerror = () => reject(new Error(`Unable to load ${frameUrl(index)}`));
+          image.src = frameUrl(index);
+        })));
+      }
+
+      function startSequence() {
+        status.hidden = true;
+        resizeCanvas();
+        drawFrame(images[0]);
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.to(sequence, {
+          frame: frameCount - 1,
+          ease: 'none',
+          snap: 'frame',
+          scrollTrigger: {
+            trigger: '.sequence__stage',
+            start: 'top top',
+            end: '+=3200',
+            scrub: 0.35,
+            pin: true,
+            anticipatePin: 1,
+            invalidateOnRefresh: true
+          },
+          onUpdate: () => drawFrame(images[Math.round(sequence.frame)])
+        });
+        window.addEventListener('resize', resizeCanvas, { passive: true });
+      }
+
+      for (let index = 0; index < frameCount; index += 1) images.push(new Image());
+      resizeCanvas();
+      preloadFrames().then(startSequence).catch((error) => {
+        statusLabel.textContent = 'Sequence unavailable';
+        statusMessage.textContent = error.message;
+        statusMessage.className = 'sequence__error';
+        progressBar.style.background = '#ff7b6b';
+      });
+    })();
+  </script>
+</body>
+</html>
